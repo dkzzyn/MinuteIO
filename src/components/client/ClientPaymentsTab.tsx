@@ -87,6 +87,7 @@ function RegisterPaymentModal({
   if (!open || !payment) return null;
 
   function submit() {
+    if (!payment) return;
     registerPayment(clientId, payment.id, { paidDate, paymentMethod, notes });
     onSuccess();
     onClose();

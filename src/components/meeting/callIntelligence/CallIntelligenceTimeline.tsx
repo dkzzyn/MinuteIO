@@ -60,7 +60,7 @@ export default function CallIntelligenceTimeline({ details, selectedSegmentId, o
           <ReferenceLine y={50} stroke="var(--border-subtle)" strokeDasharray="2 2" />
           <Tooltip
             contentStyle={{ backgroundColor: "var(--bg-muted)", border: "1px solid var(--border-subtle)", borderRadius: 8 }}
-            formatter={(value: number) => [value + "%", "Sentimento"]}
+            formatter={(value: number | undefined) => [(value ?? 0) + "%", "Sentimento"]}
             labelFormatter={(label) => `Minuto ${label}`}
           />
           <Area type="monotone" dataKey="value" stroke="var(--accent-gold)" strokeWidth={2} fill="url(#sentimentGrad)" />
