@@ -1,3 +1,5 @@
+import type { SupportMaterial } from "./supportMaterial";
+
 export type ClientStatus = "ativo" | "em_negociacao" | "perdido" | "ganho" | "inativo";
 
 export type FunnelStage = "prospeccao" | "qualificacao" | "proposta" | "negociacao" | "fechamento";
@@ -110,6 +112,8 @@ export type Client = {
   };
   color: string;
   materials: ClientMaterial[];
+  /** Materiais de apoio (upload com metadados). Novos uploads vão aqui. */
+  supportMaterials?: SupportMaterial[];
   timeline: TimelineActivity[];
   generalData: {
     endereco?: string;

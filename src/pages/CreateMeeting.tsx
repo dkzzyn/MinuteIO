@@ -28,6 +28,20 @@ export default function CreateMeeting() {
     navigate(`/meetings/${m.id}`);
   }
 
+  async function startLiveSession() {
+    const payload = {
+      title: title || "Reunião ao vivo",
+      datetime: new Date().toISOString(),
+      durationMinutes: 60,
+      pipeline_stage: "discovery" as const,
+      language: "pt-BR" as const,
+      result: "Em andamento" as const,
+      participants: participants ? participants.split(",").map((s) => s.trim()) : ["Você", "Participante"]
+    };
+    const m = await createMeeting(payload);
+    navigate(`/session/${m.id}`);
+  }
+
   return (
     <div className="max-w-xl space-y-4">
       <div className="text-xl font-semibold">Criar/Agendar Reunião</div>
@@ -54,8 +68,8 @@ export default function CreateMeeting() {
         <textarea value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Resumo inicial" className="w-full px-3 py-2 rounded bg-[var(--input-bg)] h-28" style={{ border: '1px solid var(--input-border)' }} />
       </div>
       <div className="flex gap-3">
-        <button onClick={submit} className="px-4 py-2 rounded bg-[var(--accent-green)] hover:opacity-90 text-white">Salvar</button>
-        <a href="#" className="px-4 py-2 rounded bg-[var(--bg-muted)]">Iniciar com MinuteIO</a>
+        <button onClick={submit} className="px-4 py-2 rounded bg-[var(--bg-muted)] hover:bg-[var(--nav-hover)] text-[var(--text-primary)]">Salvar</button>
+        <button type="button" onClick={startLiveSession} className="px-4 py-2 rounded bg-[var(--accent-green)] hover:opacity-90 text-white">Iniciar Reunião</button>
       </div>
     </div>
   );

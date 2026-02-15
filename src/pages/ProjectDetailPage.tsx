@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getClientById } from "../data/clientsStore";
+import { getClientById, addSupportMaterial } from "../data/clientsStore";
+import { getMeetingsHistory } from "../services/reportsService";
 import type { Client, ClientMaterial, MaterialCategory } from "../types/client";
+import { SUPPORT_MATERIAL_TYPE_LABELS, MATERIAL_FUNNEL_STAGE_LABELS } from "../types/supportMaterial";
 import ClientPaymentsTab from "../components/client/ClientPaymentsTab";
+import AddSupportMaterialModal from "../components/modals/AddSupportMaterialModal";
 
 const statusLabels: Record<Client["status"], string> = {
   ativo: "Ativo",
@@ -65,11 +68,21 @@ export default function ProjectDetailPage() {
   const { id } = useParams();
   const [client, setClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("resumo");
+  const [addMaterialModalOpen, setAddMaterialModalOpen] = useState(false);
+  const [clientMeetings, setClientMeetings] = useState<{ id: string; title: string; date: string }[]>([]);
 
   useEffect(() => {
     if (!id) return;
     setClient(getClientById(id) ?? null);
   }, [id]);
+
+  useEffect(() => {
+    if (!client) return;
+    getMeetingsHistory().then((list) => {
+      const forClient = list.filter((m) => m.clientName === client.name);
+      setClientMeetings(forClient.map((m) => ({ id: m.id, title: m.title, date: m.date })));
+    });
+  }, [client?.id, client?.name]);
 
   const refreshClient = () => {
     if (id) setClient(getClientById(id) ?? null);
@@ -78,7 +91,8 @@ export default function ProjectDetailPage() {
   if (!id) return <div className="text-[var(--text-secondary)]">ID não informado.</div>;
   if (!client) return <div className="text-[var(--text-secondary)]">Cliente não encontrado.</div>;
 
-  const hasMaterials = client.materials.length > 0;
+  const supportMaterials = client.supportMaterials ?? [];
+  const hasMaterials = client.materials.length > 0 || supportMaterials.length > 0;
   const g = client.generalData;
 
   return (
@@ -124,6 +138,7 @@ export default function ProjectDetailPage() {
             </Link>
             <button
               type="button"
+              onClick={() => setAddMaterialModalOpen(true)}
               className="px-4 py-2 rounded-lg bg-[var(--bg-muted)] hover:bg-[var(--nav-hover)] text-[var(--text-primary)] font-medium text-sm"
             >
               Adicionar documento
@@ -234,6 +249,7 @@ export default function ProjectDetailPage() {
               </p>
               <button
                 type="button"
+                onClick={() => setAddMaterialModalOpen(true)}
                 className="px-4 py-2 rounded-lg bg-[var(--accent-green)] hover:opacity-90 text-white font-medium text-sm"
               >
                 Adicionar primeiro material
@@ -241,6 +257,21 @@ export default function ProjectDetailPage() {
             </div>
           ) : (
             <ul className="space-y-2">
+              {supportMaterials.map((m) => (
+                <li
+                  key={m.id}
+                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--bg-muted)]/50"
+                  style={{ borderColor: "var(--border-subtle)" }}
+                >
+                  <div>
+                    <span className="font-medium text-[var(--text-primary)]">{m.title}</span>
+                    <span className="text-xs text-[var(--text-secondary)] ml-2">
+                      {SUPPORT_MATERIAL_TYPE_LABELS[m.materialType]} · {MATERIAL_FUNNEL_STAGE_LABELS[m.funnelStage]} · {new Date(m.uploadedAt).toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+                  <a href={m.fileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--accent-green)] hover:underline">Abrir</a>
+                </li>
+              ))}
               {client.materials.map((m) => (
                 <li
                   key={m.id}
@@ -265,6 +296,18 @@ export default function ProjectDetailPage() {
       {activeTab === "pagamentos" && (
         <ClientPaymentsTab client={client} onRefresh={refreshClient} />
       )}
+
+      <AddSupportMaterialModal
+        open={addMaterialModalOpen}
+        onClose={() => setAddMaterialModalOpen(false)}
+        clientId={client.id}
+        clientName={client.name}
+        clientMeetings={clientMeetings}
+        onSuccess={(payload) => {
+          addSupportMaterial(client.id, payload);
+          refreshClient();
+        }}
+      />
     </div>
   );
 }

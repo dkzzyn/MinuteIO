@@ -75,7 +75,7 @@ export default function Meetings() {
             {filtered.length === 0 && <div className="p-3 text-[var(--text-secondary)]">Nenhum relatório.</div>}
           </div>
         </div>
-        <button onClick={() => navigate("/meetings/new")} className="mt-3 w-full px-3 py-2 rounded bg-[var(--accent-green)] hover:opacity-90">Iniciar com MinuteIO</button>
+        <button onClick={() => navigate("/session/live")} className="mt-3 w-full px-3 py-2 rounded bg-[var(--accent-green)] hover:opacity-90">Iniciar Reunião</button>
       </div>
       <div className="md:col-span-2">
         <Routes>

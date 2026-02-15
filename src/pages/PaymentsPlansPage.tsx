@@ -6,9 +6,17 @@ import {
   getTypeLabel
 } from "../data/companyTokensStore";
 import type { TokenUsageEntry, TokenUsageType } from "../types/companyTokens";
+import BuyTokensModal from "../components/modals/BuyTokensModal";
+import ChangePlanModal, { type PlanId } from "../components/modals/ChangePlanModal";
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+}
+
+function planNameToId(planName: string): PlanId {
+  if (planName.toLowerCase().includes("starter")) return "starter";
+  if (planName.toLowerCase().includes("scale")) return "scale";
+  return "pro";
 }
 
 export default function PaymentsPlansPage() {
@@ -16,8 +24,11 @@ export default function PaymentsPlansPage() {
   const [reportFilterUser, setReportFilterUser] = useState("");
   const [reportFilterClient, setReportFilterClient] = useState("");
   const [reportFilterType, setReportFilterType] = useState<TokenUsageType | "">("");
+  const [buyTokensOpen, setBuyTokensOpen] = useState(false);
+  const [changePlanOpen, setChangePlanOpen] = useState(false);
 
   const company = getCompanyTokens();
+  const currentPlanId = planNameToId(company.planName);
   const entries = getTokenUsageEntries();
 
   const usagePercent = company.tokensTotalPerCycle
@@ -160,10 +171,10 @@ export default function PaymentsPlansPage() {
 
           {/* Botões */}
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="px-4 py-2 rounded-lg bg-[var(--accent-green)] hover:opacity-90 text-white font-medium text-sm">
+            <button type="button" onClick={() => setBuyTokensOpen(true)} className="px-4 py-2 rounded-lg bg-[var(--accent-green)] hover:opacity-90 text-white font-medium text-sm">
               Adquirir tokens adicionais
             </button>
-            <button type="button" className="px-4 py-2 rounded-lg bg-[var(--bg-muted)] hover:bg-[var(--nav-hover)] text-[var(--text-primary)] font-medium text-sm">
+            <button type="button" onClick={() => setChangePlanOpen(true)} className="px-4 py-2 rounded-lg bg-[var(--bg-muted)] hover:bg-[var(--nav-hover)] text-[var(--text-primary)] font-medium text-sm">
               Alterar plano
             </button>
           </div>
@@ -291,6 +302,20 @@ export default function PaymentsPlansPage() {
           Ver clientes
         </Link>
       </div>
+
+      <BuyTokensModal
+        open={buyTokensOpen}
+        onClose={() => setBuyTokensOpen(false)}
+        company={company}
+        onSuccess={() => {}}
+      />
+      <ChangePlanModal
+        open={changePlanOpen}
+        onClose={() => setChangePlanOpen(false)}
+        company={company}
+        currentPlanId={currentPlanId}
+        onSuccess={() => {}}
+      />
     </div>
   );
 }

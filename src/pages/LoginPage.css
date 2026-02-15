@@ -1,0 +1,261 @@
+/* ========== Login SaaS premium – dark mode, glassmorphism, glow verde ========== */
+.login-page {
+  --hero-start: #0b1120;
+  --hero-end: #0f1b2d;
+  --navy: #0a0f1c;
+  --green: #22c55e;
+  --green-dark: #16a34a;
+  --glass: rgba(15, 23, 42, 0.6);
+  --glass-border: rgba(34, 197, 94, 0.25);
+  --input-bg: rgba(15, 23, 42, 0.8);
+  --input-border: rgba(51, 65, 85, 0.8);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Inter", sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ========== BACKGROUND CINEMATOGRÁFICO PREMIUM ========== */
+.login-cinematic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Base: gradiente radial profundo + azul petróleo + marinho */
+.login-cinematic-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    /* Vinheta: escurecimento nas bordas para profundidade */
+    radial-gradient(
+      ellipse 100% 100% at 50% 50%,
+      transparent 0%,
+      transparent 45%,
+      rgba(10, 15, 28, 0.4) 75%,
+      rgba(7, 10, 18, 0.85) 100%
+    ),
+    /* Linhas diagonais geométricas ultra discretas (3% opacity) */
+    repeating-linear-gradient(
+      127deg,
+      transparent 0,
+      transparent 2px,
+      rgba(34, 197, 94, 0.03) 2px,
+      rgba(34, 197, 94, 0.03) 3px
+    ),
+    repeating-linear-gradient(
+      37deg,
+      transparent 0,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 3px
+    ),
+    /* Névoa digital sutil no centro */
+    radial-gradient(
+      ellipse 90% 80% at 50% 50%,
+      rgba(15, 27, 45, 0.25) 0%,
+      transparent 55%
+    ),
+    /* Halo verde atrás da área do card (lado direito, centro vertical) */
+    radial-gradient(
+      ellipse 70% 90% at 85% 50%,
+      rgba(34, 197, 94, 0.12) 0%,
+      rgba(34, 197, 94, 0.04) 35%,
+      transparent 65%
+    ),
+    /* Glow verde principal: lado direito central, iluminação volumétrica */
+    radial-gradient(
+      ellipse 100% 120% at 75% 50%,
+      rgba(34, 197, 94, 0.15) 0%,
+      rgba(34, 197, 94, 0.06) 30%,
+      transparent 55%
+    ),
+    /* Gradiente radial secundário quase imperceptível no lado esquerdo */
+    radial-gradient(
+      ellipse 80% 100% at 20% 50%,
+      rgba(15, 27, 45, 0.5) 0%,
+      transparent 50%
+    ),
+    /* Micro partículas de luz verde discretas */
+    radial-gradient(circle 100px at 12% 22%, rgba(34, 197, 94, 0.025) 0%, transparent 100px),
+    radial-gradient(circle 80px at 88% 65%, rgba(34, 197, 94, 0.02) 0%, transparent 80px),
+    radial-gradient(circle 60px at 50% 85%, rgba(34, 197, 94, 0.015) 0%, transparent 60px),
+    radial-gradient(circle 70px at 72% 25%, rgba(34, 197, 94, 0.018) 0%, transparent 70px),
+    /* Base: profundidade infinita, transição suave */
+    radial-gradient(
+      ellipse 140% 120% at 50% 40%,
+      var(--hero-end) 0%,
+      var(--hero-start) 35%,
+      var(--navy) 70%,
+      #060a12 100%
+    );
+  background-size: cover;
+  background-position: center;
+}
+
+/* Camada extra de profundidade e suavidade */
+.login-cinematic-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 90% 90% at 50% 50%,
+    transparent 0%,
+    rgba(11, 17, 32, 0.3) 100%
+  );
+  pointer-events: none;
+}
+
+/* Film grain cinematográfico – granulação fina, uniforme */
+.login-cinematic-grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  opacity: 0.7;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* ========== Conteúdo acima do background ========== */
+.login-page > section {
+  position: relative;
+  z-index: 1;
+}
+
+/* Coluna esquerda: transparente para o cinematic bg aparecer; glow local opcional */
+.login-hero {
+  background: transparent;
+}
+
+.login-hero::after {
+  content: "";
+  position: absolute;
+  left: 20%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(34, 197, 94, 0.04) 0%,
+    transparent 55%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.login-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Coluna direita: transparente */
+.login-right {
+  background: transparent;
+}
+
+.login-right::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 70%;
+  height: 120%;
+  background: radial-gradient(
+    ellipse at 80% 50%,
+    rgba(34, 197, 94, 0.06) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.login-right > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== Cards de métrica: glassmorphism ========== */
+.metric-card {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.25),
+    0 0 20px rgba(34, 197, 94, 0.06);
+}
+
+/* ========== Card de login: glass + borda glow verde ========== */
+.login-card {
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 20px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(34, 197, 94, 0.08),
+    0 0 60px rgba(34, 197, 94, 0.12);
+}
+
+/* ========== Inputs escuros com foco verde ========== */
+.login-input {
+  background: var(--input-bg) !important;
+  border: 1px solid var(--input-border) !important;
+  color: #f8fafc !important;
+}
+
+.login-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25) !important;
+}
+
+/* ========== Botão gradiente verde ========== */
+.login-btn {
+  background: linear-gradient(180deg, var(--green-dark) 0%, var(--green) 100%) !important;
+  border: none !important;
+  font-weight: 600 !important;
+}
+
+.login-btn:hover:not(:disabled) {
+  box-shadow: 0 0 24px rgba(34, 197, 94, 0.4), 0 0 48px rgba(34, 197, 94, 0.2) !important;
+  filter: brightness(1.05);
+}
+
+.login-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5) !important;
+}
+
+/* ========== Links em verde ========== */
+.login-link-accent {
+  color: var(--green) !important;
+}
+
+.login-link-accent:hover {
+  color: #4ade80 !important;
+}
+
+/* ========== Checkbox verde ========== */
+.login-page input[type="checkbox"] {
+  accent-color: var(--green);
+}
+
+/* ========== Headline "Resultados reais" com glow ========== */
+.headline-green {
+  text-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+}

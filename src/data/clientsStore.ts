@@ -1,4 +1,5 @@
 import type { Client, ClientPayment } from "../types/client";
+import type { SupportMaterial } from "../types/supportMaterial";
 
 function iso(daysAgo: number) {
   const d = new Date();
@@ -47,6 +48,7 @@ const initialClients: Client[] = [
       { id: "m1", name: "Apresentação comercial", type: "ppt", category: "pre-venda", date: iso(5), url: "#" },
       { id: "m2", name: "Proposta v2", type: "pdf", category: "proposta", date: iso(2), url: "#" }
     ],
+    supportMaterials: [],
     timeline: [
       { id: "t1", type: "reuniao", title: "Reunião de diagnóstico", date: iso(3), description: "Discovery com foco em integração." },
       { id: "t2", type: "documento", title: "Envio de proposta", date: iso(2) },
@@ -107,6 +109,7 @@ const initialClients: Client[] = [
     tags: { segmento: "SaaS", tamanho: "Startup", origemLead: "Indicação" },
     color: "#3b82f6",
     materials: [],
+    supportMaterials: [],
     timeline: [
       { id: "t4", type: "reuniao", title: "Demo funcional", date: iso(1) }
     ],
@@ -200,4 +203,21 @@ export function addPayment(clientId: string, data: Omit<ClientPayment, "id" | "h
     status,
     history: [{ date: new Date().toISOString(), action: "criada" }]
   });
+}
+
+export function addSupportMaterial(clientId: string, material: Omit<SupportMaterial, "id" | "clientId" | "uploadedAt" | "uploadedByUserId">): SupportMaterial {
+  const c = clients.find((x) => x.id === clientId);
+  if (!c) throw new Error("Cliente não encontrado");
+  if (!c.supportMaterials) c.supportMaterials = [];
+  const id = `sm-${Date.now()}`;
+  const now = new Date().toISOString();
+  const newMaterial: SupportMaterial = {
+    ...material,
+    id,
+    clientId,
+    uploadedAt: now,
+    uploadedByUserId: "u1"
+  };
+  c.supportMaterials.push(newMaterial);
+  return newMaterial;
 }

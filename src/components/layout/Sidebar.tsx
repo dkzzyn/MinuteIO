@@ -1,6 +1,14 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 h-screen bg-[var(--bg-elevated)] border-r flex flex-col z-30" style={{ borderColor: "var(--border-subtle)" }}>
       <div className="h-16 px-4 flex items-center gap-2">
@@ -32,7 +40,7 @@ export default function Sidebar() {
             <div className="text-xs text-neutral-400">Empresa não vinculada</div>
           </div>
         </div>
-        <button className="mt-3 w-full px-3 py-2 rounded bg-[var(--bg-muted)] hover:bg-[var(--nav-hover)]">Sair</button>
+        <button type="button" onClick={handleLogout} className="mt-3 w-full px-3 py-2 rounded bg-[var(--bg-muted)] hover:bg-[var(--nav-hover)] text-[var(--text-primary)]">Sair</button>
       </div>
     </aside>
   );

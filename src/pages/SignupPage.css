@@ -1,0 +1,210 @@
+/* ========== Signup: card com borda em degradê verde → azul ========== */
+.login-page .signup-card {
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(34, 197, 94, 0.08),
+    0 0 60px rgba(34, 197, 94, 0.12);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.login-page .signup-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.5) 0%, rgba(59, 130, 246, 0.4) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ========== Botão "Ver Planos" (borda degradê, hover glow) ========== */
+.signup-btn-plans {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)),
+    linear-gradient(135deg, #22c55e 0%, #3b82f6 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  transition: box-shadow 0.2s ease;
+}
+
+.signup-btn-plans:hover {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 40px rgba(59, 130, 246, 0.15);
+}
+
+.signup-btn-plans svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ========== Modal de planos: overlay ========== */
+.signup-plans-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: signup-plans-fadeIn 0.2s ease-out;
+}
+
+@keyframes signup-plans-fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========== Modal: container glassmorphism ========== */
+.signup-plans-modal {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: 2rem 2rem 2.5rem;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(34, 197, 94, 0.1),
+    0 0 60px rgba(34, 197, 94, 0.12);
+  animation: signup-plans-scaleIn 0.25s ease-out;
+}
+
+.signup-plans-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.4) 0%, rgba(59, 130, 246, 0.35) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+@keyframes signup-plans-scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ========== Cards de plano ========== */
+.signup-plan-card {
+  position: relative;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  border-radius: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.signup-plan-card:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 0 24px rgba(34, 197, 94, 0.08);
+}
+
+.signup-plan-card--popular {
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.2), 0 0 30px rgba(34, 197, 94, 0.1);
+}
+
+.signup-plan-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #3b82f6 100%);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* ========== Botões dos planos ========== */
+.signup-plan-cta {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 12px;
+  transition: box-shadow 0.2s, filter 0.2s;
+}
+
+.signup-plan-cta--outline {
+  background: transparent;
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.signup-plan-cta--outline:hover {
+  border-color: rgba(148, 163, 184, 0.6);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.signup-plan-cta--gradient {
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #3b82f6 100%);
+  color: #fff;
+  border: none;
+  padding: 0.875rem 1rem;
+  font-size: 0.9375rem;
+}
+
+.signup-plan-cta--gradient:hover {
+  box-shadow: 0 0 24px rgba(34, 197, 94, 0.4), 0 0 48px rgba(59, 130, 246, 0.2);
+  filter: brightness(1.05);
+}
+
+.signup-plan-cta--enterprise {
+  background: transparent;
+  color: #e2e8f0;
+  border: 1px solid rgba(99, 102, 241, 0.5);
+}
+
+.signup-plan-cta--enterprise:hover {
+  border-color: rgba(99, 102, 241, 0.8);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+  background: rgba(99, 102, 241, 0.08);
+}

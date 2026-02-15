@@ -1,0 +1,65 @@
+/**
+ * MinuteIO — Sistema de ícones padronizado (SaaS premium)
+ * Cores oficiais: gradiente #22C55E → #06B6D4 → #3B82F6
+ * Padrão: outline, stroke 1.5, viewBox 0 0 24 24, currentColor
+ */
+
+:root {
+  /* Cores oficiais para ícones */
+  --icon-primary: #3b82f6;
+  --icon-success: #22c55e;
+  --icon-cyan: #06b6d4;
+  --icon-muted: #94a3b8;
+  --icon-white: #ffffff;
+  /* Gradiente primário da marca (uso em ícones especiais) */
+  --icon-gradient-start: #22c55e;
+  --icon-gradient-mid: #06b6d4;
+  --icon-gradient-end: #3b82f6;
+}
+
+/* Base: tamanho e stroke padrão (controle via CSS, nunca width/height fixo no SVG) */
+.icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-md {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-lg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Variantes de cor (use com className="icon icon-success" etc.) */
+.icon-primary {
+  color: var(--icon-primary);
+}
+
+.icon-success {
+  color: var(--icon-success);
+}
+
+.icon-muted {
+  color: var(--icon-muted);
+}
+
+.icon-white {
+  color: var(--icon-white);
+}
+
+/* Alinhamento com texto */
+.icon-text {
+  vertical-align: -0.2em;
+}
