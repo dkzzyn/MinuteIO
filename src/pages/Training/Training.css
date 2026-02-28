@@ -1,0 +1,1146 @@
+/* Hub de Treinamentos */
+
+.training-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.training-layout-header {
+  margin-bottom: 1.5rem;
+}
+
+.training-layout-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+}
+
+.training-layout-subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.training-layout-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.training-layout-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: color 0.2s, background 0.2s;
+}
+
+.training-layout-tab:hover {
+  color: var(--text-primary);
+  background: var(--nav-hover);
+}
+
+.training-layout-tab--active {
+  color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.training-layout-content {
+  min-height: 400px;
+}
+
+/* ========== Hub page: resumo, feedbacks, histórico, módulos ========== */
+.training-hub-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 0.25rem 0;
+}
+
+.training-hub-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.training-hub-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.training-hub-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.training-hub-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+}
+
+.training-hub-kpi-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.training-hub-kpi-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.training-hub-highlight {
+  padding: 1rem;
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 4px solid var(--accent-blue);
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.training-hub-feedbacks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.training-hub-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+}
+
+.training-hub-feedback--strength {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.training-hub-feedback--opportunity {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.training-hub-feedback-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.training-hub-feedback--strength .training-hub-feedback-badge { color: var(--accent-green); }
+.training-hub-feedback--opportunity .training-hub-feedback-badge { color: var(--accent-orange); }
+
+.training-hub-feedback-text {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.training-hub-history-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+}
+
+.training-hub-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.training-hub-history-table th,
+.training-hub-history-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.training-hub-history-table th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+}
+
+.training-hub-history-table tr:last-child td {
+  border-bottom: none;
+}
+
+.training-hub-btn-link {
+  padding: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--accent-blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.training-hub-btn-link:hover {
+  text-decoration: underline;
+}
+
+/* Hub: módulos disponíveis (cards) */
+.training-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+.training-hub-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.training-hub-card:hover {
+  border-color: var(--accent-blue);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.training-hub-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+}
+
+.training-hub-card-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+  flex: 1;
+  line-height: 1.45;
+}
+
+.training-hub-card-btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent-blue);
+  border-radius: 8px;
+  text-decoration: none;
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+.training-hub-card-btn:hover {
+  opacity: 0.9;
+}
+
+/* Product: curso */
+.training-product {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  min-height: 420px;
+}
+
+@media (max-width: 768px) {
+  .training-product {
+    grid-template-columns: 1fr;
+  }
+}
+
+.training-product-progress {
+  margin-bottom: 1rem;
+}
+
+.training-product-progress-bar {
+  height: 6px;
+  background: var(--bg-muted);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.training-product-progress-fill {
+  height: 100%;
+  background: var(--accent-blue);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.training-product-progress-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0.35rem 0 0;
+}
+
+.training-product-lessons {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.training-product-lesson {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+  text-align: left;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.training-product-lesson:hover {
+  background: var(--nav-hover);
+}
+
+.training-product-lesson--active {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-blue);
+}
+
+.training-product-lesson--done {
+  color: var(--text-secondary);
+}
+
+.training-product-lesson-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-green);
+}
+
+.training-product-lesson-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.training-product-lesson-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.training-product-lesson-duration,
+.training-product-lesson-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.training-product-lesson--in_progress .training-product-lesson-icon { color: var(--accent-blue); }
+.training-product-lesson--not_started .training-product-lesson-icon { color: var(--text-secondary); }
+.training-product-content-meta {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+
+.training-product-main {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.training-product-empty,
+.training-product-content {
+  padding: 0.5rem 0;
+}
+
+.training-product-empty p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.training-product-content-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+}
+
+.training-product-content-placeholder {
+  margin-bottom: 1.5rem;
+}
+
+.training-product-video-placeholder,
+.training-product-text-placeholder,
+.training-product-quiz-placeholder {
+  padding: 2rem;
+  background: var(--bg-muted);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+.training-product-video-placeholder span {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.training-product-actions {
+  padding-top: 0.5rem;
+}
+
+.training-product-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+
+.training-product-btn--primary {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.training-product-btn--primary:hover {
+  opacity: 0.9;
+}
+
+/* Simulator: cenários + chat */
+.training-simulator {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.training-simulator-scenarios {
+  margin-bottom: 0.5rem;
+}
+
+.training-simulator-label,
+.training-simulator-input-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.training-simulator-scenario-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.training-simulator-scenario-btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.training-simulator-scenario-btn:hover {
+  background: var(--nav-hover);
+}
+
+.training-simulator-scenario-btn--active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.training-simulator-scenario-desc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0;
+}
+
+.training-simulator-info {
+  padding: 0.75rem 1rem;
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.training-simulator-chat {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.training-simulator-messages {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.training-simulator-msg {
+  max-width: 85%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+}
+
+.training-simulator-msg--user {
+  align-self: flex-end;
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.training-simulator-msg--assistant {
+  align-self: flex-start;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.training-simulator-msg-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.training-simulator-msg-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.training-simulator-msg--user .training-simulator-msg-avatar { background: rgba(59, 130, 246, 0.4); }
+.training-simulator-msg-sender {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+.training-simulator-msg-time {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.training-simulator-msg-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+  opacity: 0.9;
+}
+
+.training-simulator-msg-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.training-simulator-suggestion-item {
+  padding: 0.75rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.training-simulator-suggestion-strategy {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.35rem;
+}
+
+.training-simulator-suggestion-text {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+  line-height: 1.4;
+}
+
+.training-simulator-suggestion-use {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent-blue);
+  background: transparent;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.training-simulator-suggestion-use:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.training-simulator-suggested-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.training-simulator-feedback-card {
+  padding: 1rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+}
+
+.training-simulator-feedback-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+}
+
+.training-simulator-feedback-text {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.training-simulator-form-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.training-simulator-suggested {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.training-simulator-suggested-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.training-simulator-suggested-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.training-simulator-suggested-btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.training-simulator-suggested-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.training-simulator-form {
+  padding: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.training-simulator-form .training-simulator-form-row {
+  margin-top: 0.5rem;
+}
+
+.training-simulator-form .training-simulator-input {
+  flex: 1;
+}
+
+.training-simulator-input {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+}
+
+.training-simulator-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.training-simulator-send {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent-blue);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.training-simulator-send:hover {
+  opacity: 0.9;
+}
+
+/* Objections */
+.training-objections {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1.5rem;
+  min-height: 400px;
+}
+
+@media (max-width: 768px) {
+  .training-objections {
+    grid-template-columns: 1fr;
+  }
+}
+
+.training-objections-list-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+}
+
+.training-objections-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.training-objections-item {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+  text-align: left;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 0.25rem;
+  transition: background 0.2s;
+}
+
+.training-objections-item:hover {
+  background: var(--nav-hover);
+}
+
+.training-objections-item--active {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+
+.training-objections-main {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.training-objections-empty p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.training-objections-scenario {
+  margin-bottom: 1.5rem;
+}
+
+.training-objections-scenario-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem;
+}
+
+.training-objections-scenario-text {
+  font-size: 1.0625rem;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+  font-style: italic;
+}
+
+.training-objections-tip {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding: 0.75rem;
+  background: var(--bg-muted);
+  border-radius: 8px;
+}
+
+.training-objections-reply-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.training-objections-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  resize: vertical;
+  margin-bottom: 1rem;
+}
+
+.training-objections-reply-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.training-objections-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+
+.training-objections-btn--primary {
+  background: #8b5cf6;
+  color: #fff;
+}
+
+.training-objections-btn--secondary {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.training-objections-suggestions {
+  margin-top: 1.5rem;
+}
+
+.training-objections-suggestions-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+}
+
+.training-objections-suggestions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.training-objections-suggestion-item {
+  padding: 0.75rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.training-objections-suggestion-text {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+  line-height: 1.4;
+}
+
+.training-objections-suggestion-use {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #8b5cf6;
+  background: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.training-objections-suggestion-use:hover {
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.training-objections-scenario-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+
+.training-objections-feedback {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+}
+
+.training-objections-feedback-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+}
+
+.training-objections-feedback-strengths,
+.training-objections-feedback-improve {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+  line-height: 1.45;
+}
+
+.training-objections-feedback-strengths strong { color: var(--accent-green); }
+.training-objections-feedback-improve strong { color: var(--accent-orange); }
+
+/* ========== Dashboard de Treinamentos (dentro da aba Treinamentos) ========== */
+.training-dashboards {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.training-dashboards-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+}
+
+.training-dashboards-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.training-dashboards-card {
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+}
+
+.training-dashboards-card--top_sellers { border-left: 4px solid var(--accent-green); }
+.training-dashboards-card--delayed_module { border-left: 4px solid var(--accent-orange); }
+.training-dashboards-card--correlation { border-left: 4px solid var(--accent-blue); }
+
+.training-dashboards-card-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+}
+
+.training-dashboards-card-desc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
+}
+
+.training-dashboards-card-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.training-dashboards-card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.training-dashboards-card-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.training-dashboards-card-list li:last-child { border-bottom: none; }
+
+.training-dashboards-card-list-value {
+  font-weight: 600;
+  color: var(--accent-green);
+}
+
+.training-dashboards-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.training-dashboards-kpi-card {
+  padding: 1.25rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+.training-dashboards-kpi-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+}
+
+.training-dashboards-kpi-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.training-dashboards-kpi-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+}
+
+.training-dashboards-kpi-label { color: var(--text-secondary); }
+.training-dashboards-kpi-value { font-weight: 600; color: var(--text-primary); }
+
+.training-dashboards-trend {
+  padding: 1.25rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+.training-dashboards-trend-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.training-dashboards-trend-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.training-dashboards-trend-period {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.training-dashboards-trend-bars {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+  min-height: 1.5rem;
+  flex: 1;
+}
+
+.training-dashboards-trend-bar {
+  height: 8px;
+  border-radius: 4px;
+  min-width: 4px;
+}
+
+.training-dashboards-trend-bar--product { background: var(--accent-blue); }
+.training-dashboards-trend-bar--simulator { background: var(--accent-green); }
+.training-dashboards-trend-bar--objections { background: #8b5cf6; }
+
+.training-dashboards-trend-overall {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.training-dashboards-trend-legend {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+}
+
+.training-dashboards-trend-legend-item--product::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-blue);
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.training-dashboards-trend-legend-item--simulator::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-green);
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.training-dashboards-trend-legend-item--objections::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #8b5cf6;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}

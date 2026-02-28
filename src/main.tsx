@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
+import { SidebarProvider } from "./context/SidebarContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
@@ -14,15 +15,24 @@ import ReportsPage from "./pages/Reports/ReportsPage";
 import Project from "./pages/Project";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import PaymentsPlansPage from "./pages/PaymentsPlansPage";
+import PostsPage from "./pages/PostsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import SessionRoomPage from "./pages/SessionRoom/SessionRoomPage";
+import ProfilePage from "./pages/Profile/ProfilePage";
+import TrainingLayout from "./pages/Training/TrainingLayout";
+import TrainingHubPage from "./pages/Training/TrainingHubPage";
+import TrainingProductPage from "./pages/Training/TrainingProductPage";
+import TrainingSimulatorPage from "./pages/Training/TrainingSimulatorPage";
+import TrainingObjectionsPage from "./pages/Training/TrainingObjectionsPage";
+import TrainingDashboardsPage from "./pages/Training/TrainingDashboardsPage";
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <SidebarProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -39,10 +49,20 @@ function App() {
                     <Route path="/project/:id" element={<ProjectDetailPage />} />
                     <Route path="/project" element={<Project />} />
                     <Route path="/reports" element={<ReportsPage />} />
+                    <Route path="/posts" element={<PostsPage />} />
+                    <Route path="/perfil" element={<ProfilePage />} />
+                    <Route path="/teams" element={<Navigate to="/perfil" replace />} />
                     <Route path="/payments" element={<PaymentsPlansPage />} />
                     <Route path="/meetings/new" element={<CreateMeeting />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/capture-tab" element={<CaptureTabPage />} />
+                    <Route path="/training" element={<TrainingLayout />}>
+                      <Route index element={<TrainingHubPage />} />
+                      <Route path="product" element={<TrainingProductPage />} />
+                      <Route path="simulator" element={<TrainingSimulatorPage />} />
+                      <Route path="objections" element={<TrainingObjectionsPage />} />
+                      <Route path="dashboards" element={<TrainingDashboardsPage />} />
+                    </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </AppLayout>
@@ -50,6 +70,7 @@ function App() {
             }
           />
         </Routes>
+        </SidebarProvider>
       </AuthProvider>
     </BrowserRouter>
   );

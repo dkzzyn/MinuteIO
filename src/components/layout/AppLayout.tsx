@@ -1,14 +1,14 @@
 import { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import { useSidebar } from "../../context/SidebarContext";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
+  const { collapsed } = useSidebar();
   return (
     <>
-      {/* Sidebar fixa: navegação + usuário e Sair */}
       <Sidebar />
-      {/* Conteúdo principal com margem para não ficar por baixo da sidebar */}
-      <div className="min-h-screen flex flex-col ml-64">
+      <div className={`min-h-screen flex flex-col transition-[margin] duration-200 ease-out ${collapsed ? "ml-16" : "ml-64"}`}>
         <Topbar />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>

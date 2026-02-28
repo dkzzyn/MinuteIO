@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { ApiError } from "../infrastructure/http/api";
+import { loginUser } from "../services/authApi";
 import "./LoginPage.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,7 +34,7 @@ export default function LoginPage() {
     if (isAuthenticated) navigate("/", { replace: true });
   }, [isAuthenticated, navigate]);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitError(null);
     const emailErr = validateEmail(email);
@@ -44,27 +46,26 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    const simulateLogin = () =>
-      new Promise<{ ok: boolean; error?: string }>((resolve) => {
-        setTimeout(() => {
-          if (password === "123456") resolve({ ok: true });
-          else resolve({ ok: false, error: "E-mail ou senha incorretos." });
-        }, 800);
+    try {
+      const result = await loginUser({
+        email: email.trim(),
+        password,
       });
-
-    simulateLogin()
-      .then((res) => {
-        if (res.ok) {
-          login("demo-token");
-          navigate("/", { replace: true });
-          return;
+      login(result.token);
+      navigate("/", { replace: true });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setSubmitError("E-mail ou senha incorretos.");
+        } else {
+          setSubmitError(err.message);
         }
-        setSubmitError(res.error ?? "E-mail ou senha incorretos.");
-      })
-      .catch(() => {
+      } else {
         setSubmitError("Não foi possível conectar. Verifique sua internet e tente novamente.");
-      })
-      .finally(() => setLoading(false));
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -209,10 +210,6 @@ export default function LoginPage() {
                 {submitError}
               </p>
             )}
-
-            <p className="text-xs text-slate-500 text-center">
-              Acesso demo: use qualquer e-mail e senha <strong className="text-slate-400">123456</strong>
-            </p>
 
             <button
               type="submit"

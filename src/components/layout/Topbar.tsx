@@ -19,7 +19,14 @@ export default function Topbar() {
         <div className="flex items-center gap-3">
           <input placeholder="Pesquisar..." className="px-3 py-2 rounded bg-[var(--input-bg)] outline-none w-64" style={{ border: '1px solid var(--input-border)' }} />
           <button className="px-3 py-2 rounded bg-[var(--bg-muted)]"><IconBell className="w-4 h-4" /></button>
-          <button className="px-3 py-2 rounded bg-[var(--bg-muted)]"><IconUser className="w-4 h-4" /></button>
+          <Link
+            to="/perfil"
+            className="h-10 w-10 rounded-full bg-[var(--bg-muted)] flex items-center justify-center hover:opacity-90"
+            title="Abrir perfil"
+            aria-label="Abrir perfil"
+          >
+            <IconUser className="w-4 h-4" />
+          </Link>
           <Link to="/settings" className="px-3 py-2 rounded bg-[var(--bg-muted)]"><IconGear className="w-4 h-4" /></Link>
           <ThemeToggle />
         </div>

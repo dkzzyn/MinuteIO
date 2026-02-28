@@ -50,13 +50,21 @@ function RecentMeetingsTable({ items }: { items: Meeting[] }) {
 export default function Dashboard() {
   const [items, setItems] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [openModal, setOpenModal] = useState(false);
 
   useEffect(() => {
-    listMeetings().then((res) => {
-      setItems(res.slice(0, 5));
-      setLoading(false);
-    });
+    listMeetings()
+      .then((res) => {
+        setItems(res.slice(0, 5));
+      })
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : "Erro ao carregar reuniões.";
+        setError(msg);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const stats = useMemo(() => {
@@ -67,6 +75,7 @@ export default function Dashboard() {
   }, [items]);
 
   if (loading) return <div>Carregando...</div>;
+  if (error) return <div className="text-red-400">{error}</div>;
 
   return (
     <div className="space-y-6">

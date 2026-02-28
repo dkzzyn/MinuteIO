@@ -45,6 +45,8 @@ const objectionLabels: Record<string, string> = {
 export default function MeetingDetailPage() {
   const { id } = useParams();
   const [details, setDetails] = useState<CallIntelligenceDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("resumo");
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
   const [askAiQuery, setAskAiQuery] = useState("");
@@ -56,7 +58,13 @@ export default function MeetingDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    getMeetingDetails(id).then((d) => setDetails(d ?? null));
+    getMeetingDetails(id)
+      .then((d) => setDetails(d ?? null))
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : "Erro ao carregar detalhes da reunião.";
+        setError(msg);
+      })
+      .finally(() => setLoading(false));
   }, [id]);
 
   const highlightChunkIds = useMemo(() => {
@@ -84,7 +92,9 @@ export default function MeetingDetailPage() {
   };
 
   if (!id) return <div className="text-[var(--text-secondary)]">Selecione uma reunião.</div>;
-  if (!details) return <div className="text-[var(--text-secondary)]">Carregando...</div>;
+  if (loading) return <div className="text-[var(--text-secondary)]">Carregando...</div>;
+  if (error) return <div className="text-red-400">{error}</div>;
+  if (!details) return <div className="text-[var(--text-secondary)]">Reunião não encontrada.</div>;
 
   const badgeKeywords = [
     ...details.keywords,

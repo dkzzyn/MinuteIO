@@ -1,0 +1,525 @@
+/* Capture Tab — layout 70/30 estilo SaaS (Notion + Linear + Zoom) */
+
+.capture-tab {
+  min-height: 100vh;
+  display: flex;
+  background: var(--bg-primary, #050509);
+  position: relative;
+}
+
+/* ========== Lado esquerdo 70% ========== */
+.capture-tab-left {
+  flex: 0 0 70%;
+  max-width: 70%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-elevated, #0b1120);
+  border-right: 1px solid var(--border-subtle, #1f2937);
+}
+
+.capture-tab-left-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Estado vazio: CTA compartilhar */
+.capture-tab-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.capture-tab-empty-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #f9fafb);
+  margin: 0 0 0.5rem;
+}
+
+.capture-tab-empty-sub {
+  font-size: 0.9375rem;
+  color: var(--text-secondary, #9ca3af);
+  margin: 0 0 1.5rem;
+  max-width: 360px;
+}
+
+.capture-tab-btn-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent-blue, #3b82f6);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.capture-tab-btn-start:hover {
+  background: #2563eb;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+}
+
+.capture-tab-btn-icon {
+  display: inline-flex;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.capture-tab-btn-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.capture-tab-btns-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.capture-tab-btn-audio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  background: rgba(51, 65, 85, 0.5);
+  border: 1px solid rgba(71, 85, 105, 0.6);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.capture-tab-btn-audio svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.capture-tab-btn-audio:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+.capture-tab-btn-audio--active {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  animation: pulse-record-capture 1.5s ease-in-out infinite;
+}
+
+.capture-tab-btn-audio--active:hover {
+  background: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.25);
+}
+
+@keyframes pulse-record-capture {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+
+.capture-tab-error {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--accent-red, #ef4444);
+}
+
+/* Aba no topo para parar compartilhamento de tela */
+.capture-tab-stop-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid var(--border-subtle, #1f2937);
+  flex-shrink: 0;
+}
+
+.capture-tab-stop-bar .capture-tab-status {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.capture-tab-btn-stop-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent-red, #ef4444);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.capture-tab-btn-stop-share:hover {
+  background: #dc2626;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+}
+
+.capture-tab-btn-stop-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Área do vídeo quando capturando */
+.capture-tab-video-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  min-height: 0;
+  background: #000;
+}
+
+.capture-tab-video {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Barra inferior: status + Parar (discreto) */
+.capture-tab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: rgba(11, 17, 32, 0.8);
+  border-top: 1px solid var(--border-subtle, #1f2937);
+}
+
+.capture-tab-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.capture-tab-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-green, #22c55e);
+  animation: capture-tab-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes capture-tab-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.capture-tab-btn-stop {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent-red, #ef4444);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.capture-tab-btn-stop:hover {
+  background: #dc2626;
+}
+
+/* ========== Lado direito 30% – Painel Insights ========== */
+.capture-tab-insights {
+  flex: 0 0 30%;
+  max-width: 30%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-muted, #111827);
+  border-left: 1px solid var(--border-subtle, #1f2937);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.capture-tab-insights-inner {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  scroll-behavior: smooth;
+}
+
+.capture-tab-insights-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.capture-tab-insights-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text-primary, #f9fafb);
+  margin: 0;
+}
+
+.capture-tab-insights-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--accent-green, #22c55e);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: box-shadow 0.3s ease;
+}
+
+.capture-tab-insights-badge--live {
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
+}
+
+/* Loading */
+.capture-tab-insights-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  color: var(--text-secondary, #9ca3af);
+  font-size: 0.875rem;
+}
+
+.capture-tab-insights-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(59, 130, 246, 0.25);
+  border-top-color: var(--accent-blue, #3b82f6);
+  border-radius: 50%;
+  animation: capture-tab-spin 0.7s linear infinite;
+}
+
+@keyframes capture-tab-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Cards minimalistas */
+.capture-tab-insights-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.capture-tab-insights-error {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.875rem;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.capture-tab-insights-error p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.capture-tab-insights-error-hint {
+  margin-top: 0.75rem !important;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.capture-tab-insights-test-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0f172a;
+  background: #22c55e;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.capture-tab-insights-test-btn:hover:not(:disabled) {
+  background: #16a34a;
+}
+
+.capture-tab-insights-test-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.capture-tab-insights-empty {
+  color: #64748b;
+  font-style: italic;
+}
+
+.capture-tab-insights-card {
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle, #1f2937);
+  transition: border-color 0.2s ease;
+}
+
+.capture-tab-insights-card:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.capture-tab-insights-card-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-blue, #3b82f6);
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.capture-tab-insights-card-text {
+  font-size: 0.875rem;
+  color: var(--text-primary, #f9fafb);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.capture-tab-insights-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-primary, #f9fafb);
+}
+
+.capture-tab-insights-list li {
+  padding: 0.35rem 0;
+  padding-left: 0;
+  border-bottom: 1px solid rgba(31, 41, 55, 0.5);
+}
+
+.capture-tab-insights-list li:last-child {
+  border-bottom: none;
+}
+
+.capture-tab-insights-list--check li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.capture-tab-insights-check {
+  flex-shrink: 0;
+  color: var(--accent-green, #22c55e);
+  font-size: 0.875rem;
+}
+
+/* Drawer toggle (visível só em mobile) */
+.capture-tab-insights-drawer-toggle {
+  display: none;
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--accent-blue, #3b82f6);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border-subtle, #1f2937);
+  cursor: pointer;
+  width: 100%;
+}
+
+/* FAB Abrir Insights (mobile) */
+.capture-tab-insights-fab {
+  display: none;
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 30;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-blue, #3b82f6);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.45);
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.capture-tab-insights-fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.5);
+}
+
+.capture-tab-insights-fab--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.capture-tab-insights-fab svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* ========== Responsivo: painel vira drawer ========== */
+@media (max-width: 1024px) {
+  .capture-tab-left {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .capture-tab-insights {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 25;
+    width: 320px;
+    max-width: 85vw;
+    flex: none;
+    transform: translateX(100%);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
+  }
+
+  .capture-tab-insights--drawer-open {
+    transform: translateX(0);
+  }
+
+  .capture-tab-insights-drawer-toggle {
+    display: block;
+  }
+
+  .capture-tab-insights-fab {
+    display: flex;
+  }
+}
+
+@media (max-width: 640px) {
+  .capture-tab-insights {
+    width: 100%;
+    max-width: 100%;
+  }
+}

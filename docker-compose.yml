@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: minuteio-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: meu_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./server
+    container_name: minuteio-backend
+    depends_on:
+      - postgres
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://admin:123456@postgres:5432/meu_app?schema=public
+      JWT_SECRET: minuteio_docker_secret
+      JWT_EXPIRES_IN: 7d
+      OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: gemma3:4b
+      WHISPER_MODE: mock
+      WHISPER_MODEL: base
+    ports:
+      - "3001:3001"
+
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_OLLAMA_API_URL: http://localhost:3001
+    container_name: minuteio-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:

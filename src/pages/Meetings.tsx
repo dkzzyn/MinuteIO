@@ -20,16 +20,24 @@ function Placeholder() {
 export default function Meetings() {
   const [items, setItems] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [stage, setStage] = useState<string>("");
   const [lang, setLang] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    listMeetings().then((res) => {
-      setItems(res);
-      setLoading(false);
-    });
+    listMeetings()
+      .then((res) => {
+        setItems(res);
+      })
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : "Erro ao carregar reuniões.";
+        setError(msg);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const filtered = useMemo(() => {
@@ -42,6 +50,7 @@ export default function Meetings() {
   }, [items, search, stage, lang]);
 
   if (loading) return <div>Carregando...</div>;
+  if (error) return <div className="text-red-400">{error}</div>;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

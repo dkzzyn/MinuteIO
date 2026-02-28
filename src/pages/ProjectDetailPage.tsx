@@ -4,7 +4,6 @@ import { getClientById, addSupportMaterial } from "../data/clientsStore";
 import { getMeetingsHistory } from "../services/reportsService";
 import type { Client, ClientMaterial, MaterialCategory } from "../types/client";
 import { SUPPORT_MATERIAL_TYPE_LABELS, MATERIAL_FUNNEL_STAGE_LABELS } from "../types/supportMaterial";
-import ClientPaymentsTab from "../components/client/ClientPaymentsTab";
 import AddSupportMaterialModal from "../components/modals/AddSupportMaterialModal";
 
 const statusLabels: Record<Client["status"], string> = {
@@ -45,12 +44,11 @@ const activityTypeLabels: Record<string, string> = {
   outro: "Outro"
 };
 
-type TabKey = "resumo" | "materiais" | "pagamentos";
+type TabKey = "resumo" | "materiais" ;
 
 const tabLabels: Record<TabKey, string> = {
   resumo: "Resumo",
   materiais: "Materiais de apoio",
-  pagamentos: "Pagamentos"
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -292,10 +290,6 @@ export default function ProjectDetailPage() {
         </Section>
       )}
 
-      {/* Tab: Pagamentos */}
-      {activeTab === "pagamentos" && (
-        <ClientPaymentsTab client={client} onRefresh={refreshClient} />
-      )}
 
       <AddSupportMaterialModal
         open={addMaterialModalOpen}

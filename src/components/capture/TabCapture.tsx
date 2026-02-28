@@ -71,28 +71,5 @@ export default function TabCapture() {
     setRecording(false);
   }
 
-  return (
-    <div className="rounded-xl bg-[var(--bg-elevated)] border p-4 space-y-4" style={{ borderColor: "var(--border-subtle)" }}>
-      <div className="font-semibold">Capturar Aba com Áudio</div>
-      <div className="text-sm text-[var(--text-secondary)]">Selecione uma aba e marque “compartilhar áudio” no diálogo do navegador.</div>
-      <div className="flex items-center gap-2">
-        <input id="mic" type="checkbox" checked={includeMic} onChange={(e) => setIncludeMic(e.target.checked)} />
-        <label htmlFor="mic" className="text-sm">Incluir microfone</label>
-      </div>
-      <div className="flex gap-2">
-        <button onClick={startCapture} className="px-4 py-2 rounded bg-[var(--accent-blue)] text-white">Iniciar captura</button>
-        <button onClick={stopCapture} className="px-4 py-2 rounded bg-[var(--bg-muted)]">Parar captura</button>
-        {!recording && <button onClick={startRecording} disabled={!stream} className="px-4 py-2 rounded bg-[var(--accent-green)] text-white disabled:opacity-60">Gravar</button>}
-        {recording && <button onClick={stopRecording} className="px-4 py-2 rounded bg-[var(--accent-red)] text-white">Parar gravação</button>}
-      </div>
-      <div className="aspect-video bg-[var(--bg-muted)] rounded overflow-hidden">
-        <video ref={videoRef} className="w-full h-full object-contain" muted />
-      </div>
-      {downloadUrl && (
-        <div className="flex items-center gap-2">
-          <a href={downloadUrl} download="captura.webm" className="px-4 py-2 rounded bg-[var(--bg-muted)]">Baixar gravação</a>
-        </div>
-      )}
-    </div>
-  );
+  return null;
 }

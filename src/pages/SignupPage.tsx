@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import "./SignupPage.css";
 import SignupPlansModal from "../components/modals/SignupPlansModal";
+import { ApiError } from "../infrastructure/http/api";
+import { registerUser } from "../services/authApi";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -41,7 +43,7 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitError(null);
 
@@ -65,20 +67,26 @@ export default function SignupPage() {
     if (nameErr || emailErr || passwordErr || confirmErr) return;
 
     setLoading(true);
-    new Promise<{ ok: boolean; error?: string }>((resolve) => {
-      setTimeout(() => resolve({ ok: true }), 1000);
-    })
-      .then((res) => {
-        if (res.ok) {
-          navigate("/login", { replace: true });
-          return;
+    try {
+      await registerUser({
+        name: fullName.trim(),
+        email: email.trim(),
+        password,
+      });
+      navigate("/login", { replace: true });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 409) {
+          setSubmitError("Este e-mail já está cadastrado.");
+        } else {
+          setSubmitError(err.message || "Não foi possível criar a conta.");
         }
-        setSubmitError(res.error ?? "Não foi possível criar a conta.");
-      })
-      .catch(() => {
+      } else {
         setSubmitError("Não foi possível conectar. Tente novamente.");
-      })
-      .finally(() => setLoading(false));
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
