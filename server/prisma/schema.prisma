@@ -17,11 +17,49 @@ model User {
   avatarUrl    String?
   posts        Post[]
   meetings     Meeting[]
+  promptVersionsCreated PromptVersion[] @relation("PromptVersionCreatedBy")
+  meetingAnalysesCreated MeetingAnalysis[] @relation("MeetingAnalysisCreatedBy")
   teamsOwned   Team[]
   teamInvitationsReceived TeamInvitation[] @relation("TeamInvitationInvitedUser")
   teamInvitationsSent     TeamInvitation[] @relation("TeamInvitationInvitedBy")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Prompt {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  title       String
+  description String?
+  promptText  String
+  version     Int             @default(1)
+  isActive    Boolean         @default(true)
+  modelHint   String?
+  versions    PromptVersion[]
+  analyses    MeetingAnalysis[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([isActive])
+  @@index([modelHint])
+  @@map("prompts")
+}
+
+model PromptVersion {
+  id          String   @id @default(cuid())
+  promptId    String   @map("prompt_id")
+  version     Int
+  promptText  String   @map("prompt_text")
+  description String?
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  prompt      Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  createdBy   User?    @relation("PromptVersionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([promptId, version])
+  @@index([promptId])
+  @@index([createdById])
+  @@map("prompt_versions")
 }
 
 model Team {
@@ -102,10 +140,30 @@ model Meeting {
   post          Post?           @relation(fields: [postId], references: [id], onDelete: SetNull)
   clips         MeetingClip[]
   insights      MeetingInsight[]
+  analyses      MeetingAnalysis[]
 
   @@index([userId])
   @@index([postId])
   @@index([datetimeStart])
+}
+
+model MeetingAnalysis {
+  id            String   @id @default(cuid())
+  meetingId     String   @map("meeting_id")
+  promptId      String   @map("prompt_id")
+  createdById   String?  @map("created_by")
+  modelUsed     String   @map("model_used")
+  inputTextHash String?  @map("input_text_hash")
+  outputText    String?  @map("output_text")
+  createdAt     DateTime @default(now()) @map("created_at")
+  meeting       Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  prompt        Prompt   @relation(fields: [promptId], references: [id], onDelete: Restrict)
+  createdBy     User?    @relation("MeetingAnalysisCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([meetingId])
+  @@index([promptId])
+  @@index([createdById])
+  @@map("meeting_analyses")
 }
 
 model MeetingClip {

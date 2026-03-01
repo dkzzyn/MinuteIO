@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSidebar } from "../../context/SidebarContext";
+import { getMyProfile } from "../../services/profileApi";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: "dashboard" },
@@ -79,6 +81,36 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { collapsed, toggleSidebar } = useSidebar();
+  const [userName, setUserName] = useState("Usuário");
+  const [userSubtitle, setUserSubtitle] = useState("Carregando perfil...");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProfile() {
+      try {
+        const profile = await getMyProfile();
+        if (cancelled) return;
+
+        setUserName(profile.name || "Usuário");
+        setAvatarUrl(profile.avatarUrl ?? null);
+
+        const role = profile.role?.toLowerCase();
+        if (role === "admin") setUserSubtitle("Admin");
+        else if (role === "supervisor") setUserSubtitle("Supervisor");
+        else setUserSubtitle("User");
+      } catch {
+        if (cancelled) return;
+        setUserSubtitle("Perfil indisponível");
+      }
+    }
+
+    loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function handleLogout() {
     logout();
@@ -142,16 +174,34 @@ export default function Sidebar() {
       <div className="mt-auto p-4 border-t shrink-0" style={{ borderColor: "var(--border-subtle)" }}>
         {!collapsed && (
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-[var(--bg-muted)] shrink-0" />
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={userName}
+                className="w-8 h-8 rounded-full object-cover shrink-0 border"
+                style={{ borderColor: "var(--border-subtle)" }}
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[var(--bg-muted)] shrink-0" />
+            )}
             <div className="min-w-0">
-              <div className="text-sm truncate">Diogo Silva</div>
-              <div className="text-xs text-neutral-400 truncate">Empresa não vinculada</div>
+              <div className="text-sm truncate">{userName}</div>
+              <div className="text-xs text-neutral-400 truncate">{userSubtitle}</div>
             </div>
           </div>
         )}
         {collapsed && (
           <div className="flex justify-center mb-3">
-            <div className="w-8 h-8 rounded-full bg-[var(--bg-muted)]" />
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={userName}
+                className="w-8 h-8 rounded-full object-cover border"
+                style={{ borderColor: "var(--border-subtle)" }}
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[var(--bg-muted)]" />
+            )}
           </div>
         )}
         <button

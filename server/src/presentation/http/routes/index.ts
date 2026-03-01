@@ -31,6 +31,16 @@ export function buildApiRouter(): Router {
   const updatePostUseCase = new UpdatePostUseCase(postRepository);
   const deletePostUseCase = new DeletePostUseCase(postRepository);
 
+  async function getCurrentUser(userId?: string) {
+    if (!userId) return null;
+    return prisma.user.findUnique({ where: { id: userId } });
+  }
+
+  function canManagePrompts(role: string) {
+    const normalized = role.toLowerCase();
+    return normalized === "admin" || normalized === "supervisor";
+  }
+
   router.post("/auth/register", async (req, res) => {
     try {
       const { name, email, password } = req.body as {
@@ -238,6 +248,225 @@ export function buildApiRouter(): Router {
           ? 403
           : 500;
       return res.status(status).json({ error: msg });
+    }
+  });
+
+  router.get("/prompts", authMiddleware, async (req, res) => {
+    try {
+      const user = await getCurrentUser(req.userId);
+      if (!user) return res.status(401).json({ error: "Usuário não autenticado." });
+
+      const query = req.query as { slug?: string; isActive?: string; modelHint?: string };
+      const where: {
+        slug?: string;
+        isActive?: boolean;
+        modelHint?: string;
+      } = {};
+
+      if (query.slug?.trim()) where.slug = query.slug.trim();
+      if (query.modelHint?.trim()) where.modelHint = query.modelHint.trim();
+      if (query.isActive != null) where.isActive = query.isActive === "true";
+
+      const prompts = await prisma.prompt.findMany({
+        where,
+        orderBy: [{ slug: "asc" }, { version: "desc" }],
+      });
+      return res.json(prompts);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao listar prompts.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
+  router.get("/prompts/:slug/latest", authMiddleware, async (req, res) => {
+    try {
+      const user = await getCurrentUser(req.userId);
+      if (!user) return res.status(401).json({ error: "Usuário não autenticado." });
+
+      const slug = req.params.slug.trim();
+      const prompt = await prisma.prompt.findFirst({
+        where: { slug, isActive: true },
+        orderBy: { version: "desc" },
+      });
+
+      if (!prompt) return res.status(404).json({ error: "Prompt ativo não encontrado para este slug." });
+      return res.json(prompt);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao buscar prompt.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
+  router.post("/prompts", authMiddleware, async (req, res) => {
+    try {
+      const user = await getCurrentUser(req.userId);
+      if (!user) return res.status(401).json({ error: "Usuário não autenticado." });
+      if (!canManagePrompts(user.role)) {
+        return res.status(403).json({ error: "Sem permissão para criar prompts." });
+      }
+
+      const body = req.body as {
+        slug?: string;
+        title?: string;
+        description?: string | null;
+        promptText?: string;
+        modelHint?: string | null;
+        isActive?: boolean;
+      };
+
+      const slug = body.slug?.trim().toLowerCase();
+      const title = body.title?.trim();
+      const promptText = body.promptText?.trim();
+      if (!slug || !title || !promptText) {
+        return res.status(400).json({ error: "slug, title e promptText são obrigatórios." });
+      }
+
+      const existing = await prisma.prompt.findFirst({
+        where: { slug },
+        orderBy: { version: "desc" },
+      });
+
+      const nextVersion = (existing?.version ?? 0) + 1;
+      const created = await prisma.prompt.create({
+        data: {
+          slug,
+          title,
+          description: body.description?.trim() || null,
+          promptText,
+          modelHint: body.modelHint?.trim() || null,
+          isActive: body.isActive ?? true,
+          version: nextVersion,
+          versions: {
+            create: {
+              version: nextVersion,
+              promptText,
+              description: body.description?.trim() || null,
+              createdById: user.id,
+            },
+          },
+        },
+      });
+
+      return res.status(201).json(created);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao criar prompt.";
+      const status = msg.includes("Unique constraint") ? 409 : 500;
+      return res.status(status).json({ error: msg });
+    }
+  });
+
+  router.post("/prompts/:id/versions", authMiddleware, async (req, res) => {
+    try {
+      const user = await getCurrentUser(req.userId);
+      if (!user) return res.status(401).json({ error: "Usuário não autenticado." });
+      if (!canManagePrompts(user.role)) {
+        return res.status(403).json({ error: "Sem permissão para versionar prompts." });
+      }
+
+      const promptId = req.params.id;
+      const prompt = await prisma.prompt.findUnique({ where: { id: promptId } });
+      if (!prompt) return res.status(404).json({ error: "Prompt não encontrado." });
+
+      const body = req.body as {
+        promptText?: string;
+        description?: string | null;
+        modelHint?: string | null;
+        isActive?: boolean;
+      };
+      const promptText = body.promptText?.trim();
+      if (!promptText) {
+        return res.status(400).json({ error: "promptText é obrigatório." });
+      }
+
+      const nextVersion = prompt.version + 1;
+      const updatedPrompt = await prisma.prompt.update({
+        where: { id: promptId },
+        data: {
+          version: nextVersion,
+          promptText,
+          description: body.description?.trim() || prompt.description,
+          modelHint: body.modelHint !== undefined ? body.modelHint?.trim() || null : prompt.modelHint,
+          isActive: body.isActive ?? prompt.isActive,
+          versions: {
+            create: {
+              version: nextVersion,
+              promptText,
+              description: body.description?.trim() || null,
+              createdById: user.id,
+            },
+          },
+        },
+      });
+
+      return res.status(201).json(updatedPrompt);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao criar versão do prompt.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
+  router.get("/meetings/:id/analyses", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      const meetingId = req.params.id;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+
+      const meeting = await prisma.meeting.findFirst({ where: { id: meetingId, userId } });
+      if (!meeting) return res.status(404).json({ error: "Reunião não encontrada." });
+
+      const analyses = await prisma.meetingAnalysis.findMany({
+        where: { meetingId },
+        include: {
+          prompt: {
+            select: { id: true, slug: true, title: true, version: true, modelHint: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      return res.json(analyses);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao listar análises.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
+  router.post("/meetings/:id/analyses", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      const meetingId = req.params.id;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+
+      const meeting = await prisma.meeting.findFirst({ where: { id: meetingId, userId } });
+      if (!meeting) return res.status(404).json({ error: "Reunião não encontrada." });
+
+      const body = req.body as {
+        promptId?: string;
+        modelUsed?: string;
+        inputTextHash?: string | null;
+        outputText?: string | null;
+      };
+      if (!body.promptId?.trim() || !body.modelUsed?.trim()) {
+        return res.status(400).json({ error: "promptId e modelUsed são obrigatórios." });
+      }
+
+      const prompt = await prisma.prompt.findUnique({ where: { id: body.promptId } });
+      if (!prompt) return res.status(404).json({ error: "Prompt não encontrado." });
+
+      const analysis = await prisma.meetingAnalysis.create({
+        data: {
+          meetingId,
+          promptId: prompt.id,
+          createdById: userId,
+          modelUsed: body.modelUsed.trim(),
+          inputTextHash: body.inputTextHash?.trim() || null,
+          outputText: body.outputText?.trim() || null,
+        },
+      });
+
+      return res.status(201).json(analysis);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao salvar análise.";
+      return res.status(500).json({ error: msg });
     }
   });
 

@@ -6,6 +6,9 @@ const prisma = new PrismaClient();
 async function main() {
   const passwordHash = await bcrypt.hash("123456", 10);
 
+  await prisma.meetingAnalysis.deleteMany();
+  await prisma.promptVersion.deleteMany();
+  await prisma.prompt.deleteMany();
   await prisma.meetingInsight.deleteMany();
   await prisma.meetingClip.deleteMany();
   await prisma.meeting.deleteMany();
@@ -176,6 +179,64 @@ async function main() {
         content: "Demo bem recebida; próximo passo é aprovação do gestor.",
       },
     ],
+  });
+
+  const summaryPrompt = await prisma.prompt.create({
+    data: {
+      slug: "meeting_summary",
+      title: "Resumo detalhado de reuniao",
+      description: "Resume reunioes em bullets e identifica decisoes.",
+      promptText:
+        "Voce e um assistente de reunioes. Gere resumo em ate 5 bullets, decisoes e proximos passos.",
+      version: 1,
+      isActive: true,
+      modelHint: "gemma3:4b",
+    },
+  });
+
+  const actionItemsPrompt = await prisma.prompt.create({
+    data: {
+      slug: "action_items",
+      title: "Extracao de tarefas",
+      description: "Identifica tarefas acionaveis com prazo e responsavel.",
+      promptText:
+        "Extraia tarefas da transcricao com prioridade, responsavel e prazo quando houver contexto.",
+      version: 1,
+      isActive: true,
+      modelHint: "gemma3:4b",
+    },
+  });
+
+  await prisma.promptVersion.createMany({
+    data: [
+      {
+        promptId: summaryPrompt.id,
+        version: 1,
+        promptText:
+          "Voce e um assistente de reunioes. Gere resumo em ate 5 bullets, decisoes e proximos passos.",
+        description: "Versao inicial de resumo",
+        createdById: admin.id,
+      },
+      {
+        promptId: actionItemsPrompt.id,
+        version: 1,
+        promptText:
+          "Extraia tarefas da transcricao com prioridade, responsavel e prazo quando houver contexto.",
+        description: "Versao inicial de tarefas",
+        createdById: admin.id,
+      },
+    ],
+  });
+
+  await prisma.meetingAnalysis.create({
+    data: {
+      meetingId: meeting1.id,
+      promptId: summaryPrompt.id,
+      createdById: admin.id,
+      modelUsed: "gemma3:4b",
+      inputTextHash: "seed-hash-1",
+      outputText: "Resumo gerado via seed para validar trilha de analises por prompt.",
+    },
   });
 
   console.log("Seed concluído com sucesso.");
