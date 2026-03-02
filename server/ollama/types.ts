@@ -11,6 +11,10 @@ export interface MinuteInsight {
   tasks: { text: string; done: boolean }[];
   key_points: string[];
   sentiment: "positive" | "neutral" | "negative";
+  score: number;
+  emotions: string[];
+  topics: string[];
+  raw_text?: string;
 }
 
 /** Entrada para analisar um minuto (envio ao Ollama) */
@@ -19,6 +23,7 @@ export interface MeetingMinuteInput {
   clientContext?: string;
   minuteNumber: number;
   transcriptChunk: string;
+  agentId?: string;
 }
 
 /** Coleção de insights por reunião (persistida no backend) */
@@ -43,6 +48,7 @@ export interface SalesSimulatorInput {
   scenario: string;
   conversationHistory: { role: "user" | "assistant"; content: string }[];
   lastSalesMessage: string;
+  agentId?: string;
 }
 
 export interface SuggestionItem {
@@ -60,6 +66,7 @@ export interface SalesSimulatorOutput {
 export interface ObjectionEvaluationInput {
   objection: string;
   salesRepResponse: string;
+  agentId?: string;
 }
 
 export interface ObjectionEvaluationOutput {
@@ -79,4 +86,28 @@ export interface TrainingDashboardOutput {
   summary: string;
   strengths: string[];
   opportunities: string[];
+}
+
+export interface PromptConfig {
+  transcription: {
+    enabled: boolean;
+    language: string;
+    meetingType: "interna" | "cliente" | "suporte" | "venda" | "outro";
+    detailLevel: "resumo_curto" | "topicos" | "completa";
+  };
+  sentiment: {
+    enabled: boolean;
+    mode: "simple" | "score";
+    showOverall: boolean;
+    showPerParticipant: boolean;
+    showIntensity: boolean;
+  };
+}
+
+export interface AgentPromptProfile {
+  agentName: string;
+  sentimentTone?: string;
+  salesAggressiveness?: string;
+  objectionTips?: unknown;
+  promptConfig?: PromptConfig;
 }

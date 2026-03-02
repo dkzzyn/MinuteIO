@@ -16,6 +16,7 @@ import Project from "./pages/Project";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import PaymentsPlansPage from "./pages/PaymentsPlansPage";
 import PostsPage from "./pages/PostsPage";
+import AgentsPage from "./pages/AgentsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -50,6 +51,7 @@ function App() {
                     <Route path="/project" element={<Project />} />
                     <Route path="/reports" element={<ReportsPage />} />
                     <Route path="/posts" element={<PostsPage />} />
+                    <Route path="/agents" element={<AgentsPage />} />
                     <Route path="/perfil" element={<ProfilePage />} />
                     <Route path="/teams" element={<Navigate to="/perfil" replace />} />
                     <Route path="/payments" element={<PaymentsPlansPage />} />

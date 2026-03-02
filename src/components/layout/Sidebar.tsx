@@ -8,6 +8,7 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: "dashboard" },
   { to: "/project", label: "Clientes", icon: "users" },
   { to: "/posts", label: "Posts", icon: "posts" },
+  { to: "/agents", label: "Agentes", icon: "agent" },
   { to: "/training", label: "Treinamentos", icon: "training" },
   { to: "/reports", label: "Relatórios", icon: "chart" },
   { to: "/payments", label: "Pagamentos e planos", icon: "credit" },
@@ -23,7 +24,7 @@ function NavIcon({ icon }: { icon: string }) {
           <rect x="3" y="3" width="7" height="9" rx="1" />
           <rect x="14" y="3" width="7" height="5" rx="1" />
           <rect x="14" y="12" width="7" height="9" rx="1" />
-          <rect x="3" y="16" width="7" height="5" rx="1" />
+          <rect x="3" y="16" width="7" height="5" rx="1" /> 
         </svg>
       );
     case "users":
@@ -70,6 +71,13 @@ function NavIcon({ icon }: { icon: string }) {
         <svg className={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
           <path d="M6 12v5c3 3 9 3 12 0v-5" />
+        </svg>
+      );
+    case "agent":
+      return (
+        <svg className={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21a8 8 0 0 1 16 0" />
         </svg>
       );
     default:

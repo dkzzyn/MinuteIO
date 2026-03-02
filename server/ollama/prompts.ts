@@ -12,13 +12,21 @@ Sempre que receber a transcrição de 1 minuto de reunião, devolva um JSON no f
   "decisions": string[],
   "tasks": [{ "text": string, "done": boolean }],
   "key_points": string[],
-  "sentiment": "positive" | "neutral" | "negative"
+  "sentiment": "positive" | "neutral" | "negative",
+  "score": number,
+  "emotions": string[],
+  "topics": string[],
+  "raw_text": string
 }
 - summary: descreva em 1 frase o que aconteceu nesse minuto.
 - decisions: decisões claras tomadas nesse trecho (ou lista vazia).
 - tasks: tarefas mencionadas (por padrão, done = false, a menos que a conversa indique que já foi feita).
 - key_points: fatos importantes (prazos, SLA, integrações, APIs, etc.).
 - sentiment: sentimento do cliente nesse minuto.
+- score: nota de -5 (muito negativo) a 5 (muito positivo).
+- emotions: principais emoções identificadas (ex.: "frustrated", "confused", "satisfied").
+- topics: tópicos detectados no minuto (ex.: "preço", "suporte", "onboarding", "bug").
+- raw_text: inclua o trecho recebido (ou vazio se não aplicável).
 Responda somente com JSON válido, sem texto extra.`;
 
 export const PROMPT_SALES_SIMULATOR = `Você é um cliente simulador em um treinamento de vendas B2B.

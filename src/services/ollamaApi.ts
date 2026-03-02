@@ -5,11 +5,22 @@
  */
 
 const BASE_URL = import.meta.env.VITE_OLLAMA_API_URL ?? "http://localhost:3001";
+const AUTH_STORAGE_KEY = "minuteio_auth_token";
+
+function tokenOrThrow(): string {
+  const token = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!token) throw new Error("Usuário não autenticado.");
+  return token;
+}
 
 async function post<T>(path: string, body: unknown): Promise<T> {
+  const token = tokenOrThrow();
   const res = await fetch(`${BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -25,6 +36,7 @@ export interface MeetingMinuteInput {
   clientContext?: string;
   minuteNumber: number;
   transcriptChunk: string;
+  agentId?: string;
 }
 
 /** Resultado por minuto (Ollama) – ver meetingInsightsApi para visão agregada. */
@@ -47,6 +59,7 @@ export interface SalesSimulatorTurnInput {
   scenario: string;
   conversationHistory?: { role: "user" | "assistant"; content: string }[];
   lastSalesMessage: string;
+  agentId?: string;
 }
 
 export interface SuggestionItem {
@@ -69,6 +82,7 @@ export function runSalesSimulatorTurn(body: SalesSimulatorTurnInput): Promise<Sa
 export interface ObjectionEvaluateInput {
   objection: string;
   salesRepResponse: string;
+  agentId?: string;
 }
 
 export interface ObjectionEvaluateOutput {

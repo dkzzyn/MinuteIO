@@ -7,6 +7,8 @@ async function main() {
   const passwordHash = await bcrypt.hash("123456", 10);
 
   await prisma.meetingAnalysis.deleteMany();
+  await prisma.agentConfig.deleteMany();
+  await prisma.agent.deleteMany();
   await prisma.promptVersion.deleteMany();
   await prisma.prompt.deleteMany();
   await prisma.meetingInsight.deleteMany();
@@ -51,6 +53,28 @@ async function main() {
   ]);
 
   const [admin, seller1] = users;
+
+  const defaultAgent = await prisma.agent.create({
+    data: {
+      userId: admin.id,
+      name: "Agente Vendas Padrão",
+      slug: "agente-vendas-padrao",
+      isActive: true,
+    },
+  });
+
+  await prisma.agentConfig.create({
+    data: {
+      agentId: defaultAgent.id,
+      sentimentTone: "neutro",
+      salesAggressiveness: "moderado",
+      objectionTips: {
+        preco: "Reforce ROI e custo da inacao.",
+        tempo_implantacao: "Proponha rollout em fases com quick wins.",
+      },
+      isActive: true,
+    },
+  });
 
   const postA = await prisma.post.create({
     data: {

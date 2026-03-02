@@ -20,6 +20,8 @@ import type {
   ObjectionEvaluationInput,
   TrainingDashboardInput,
   MinuteInsight,
+  AgentPromptProfile,
+  PromptConfig,
 } from "../ollama/types";
 import {
   saveMinuteInsight,
@@ -29,6 +31,7 @@ import {
 import { handleAudioChunk, getAudioUploadConfig } from "../transcription/audioChunkHandler";
 import { buildApiRouter } from "./presentation/http/routes";
 import { authMiddleware } from "./presentation/http/middlewares/authMiddleware";
+import { prisma } from "./infrastructure/database/prisma/client";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -38,19 +41,97 @@ app.use(express.json());
 
 const audioUpload = multer(getAudioUploadConfig());
 
+const DEFAULT_PROMPT_CONFIG: PromptConfig = {
+  transcription: {
+    enabled: true,
+    language: "pt-BR",
+    meetingType: "cliente",
+    detailLevel: "topicos",
+  },
+  sentiment: {
+    enabled: true,
+    mode: "simple",
+    showOverall: true,
+    showPerParticipant: false,
+    showIntensity: true,
+  },
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizePromptConfig(input: unknown): PromptConfig {
+  if (!isRecord(input)) return DEFAULT_PROMPT_CONFIG;
+  const transcription = isRecord(input.transcription) ? input.transcription : {};
+  const sentiment = isRecord(input.sentiment) ? input.sentiment : {};
+  return {
+    transcription: {
+      enabled: typeof transcription.enabled === "boolean" ? transcription.enabled : DEFAULT_PROMPT_CONFIG.transcription.enabled,
+      language: typeof transcription.language === "string" ? transcription.language : DEFAULT_PROMPT_CONFIG.transcription.language,
+      meetingType:
+        transcription.meetingType === "interna" ||
+        transcription.meetingType === "cliente" ||
+        transcription.meetingType === "suporte" ||
+        transcription.meetingType === "venda" ||
+        transcription.meetingType === "outro"
+          ? transcription.meetingType
+          : DEFAULT_PROMPT_CONFIG.transcription.meetingType,
+      detailLevel:
+        transcription.detailLevel === "resumo_curto" ||
+        transcription.detailLevel === "topicos" ||
+        transcription.detailLevel === "completa"
+          ? transcription.detailLevel
+          : DEFAULT_PROMPT_CONFIG.transcription.detailLevel,
+    },
+    sentiment: {
+      enabled: typeof sentiment.enabled === "boolean" ? sentiment.enabled : DEFAULT_PROMPT_CONFIG.sentiment.enabled,
+      mode: sentiment.mode === "score" ? "score" : "simple",
+      showOverall: typeof sentiment.showOverall === "boolean" ? sentiment.showOverall : DEFAULT_PROMPT_CONFIG.sentiment.showOverall,
+      showPerParticipant:
+        typeof sentiment.showPerParticipant === "boolean"
+          ? sentiment.showPerParticipant
+          : DEFAULT_PROMPT_CONFIG.sentiment.showPerParticipant,
+      showIntensity:
+        typeof sentiment.showIntensity === "boolean" ? sentiment.showIntensity : DEFAULT_PROMPT_CONFIG.sentiment.showIntensity,
+    },
+  };
+}
+
+async function getAgentPromptProfile(userId: string, agentId?: string): Promise<AgentPromptProfile | undefined> {
+  if (!agentId?.trim()) return undefined;
+
+  const agent = await prisma.agent.findFirst({
+    where: { id: agentId.trim(), userId },
+    include: { config: true },
+  });
+  if (!agent) return undefined;
+
+  return {
+    agentName: agent.name,
+    sentimentTone: agent.config?.sentimentTone ?? "neutro",
+    salesAggressiveness: agent.config?.salesAggressiveness ?? "moderado",
+    objectionTips: agent.config?.objectionTips ?? {},
+    promptConfig: normalizePromptConfig(agent.config?.extraConfig),
+  };
+}
+
 /** Analisa 1 minuto via Ollama (retorna MinuteInsight; não persiste). */
-app.post("/api/meetings/analyze-minute", async (req, res) => {
+app.post("/api/meetings/analyze-minute", authMiddleware, async (req, res) => {
   try {
     const body = req.body as MeetingMinuteInput;
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
     if (!body.meetingContext || body.minuteNumber == null || !body.transcriptChunk) {
       return res.status(400).json({ error: "meetingContext, minuteNumber e transcriptChunk são obrigatórios" });
     }
+    const agentProfile = await getAgentPromptProfile(userId, (req.body as { agentId?: string }).agentId);
     const result = await analyzeMeetingMinute({
       meetingContext: body.meetingContext,
       clientContext: body.clientContext ?? "",
       minuteNumber: Number(body.minuteNumber),
       transcriptChunk: body.transcriptChunk,
-    });
+    }, undefined, { agentProfile });
     res.json(result);
   } catch (err) {
     console.error("analyze-minute", err);
@@ -63,7 +144,13 @@ app.get("/api/meetings/:id/insights/view", authMiddleware, async (req, res) => {
   try {
     const meetingId = req.params.id;
     const title = (req.query.title as string) || undefined;
-    const view = await getMeetingInsightsView(meetingId, title);
+    const sinceQuery = (req.query.since as string) || "";
+    const since = sinceQuery ? new Date(sinceQuery) : undefined;
+    const view = await getMeetingInsightsView(
+      meetingId,
+      title,
+      since && !Number.isNaN(since.getTime()) ? since : undefined
+    );
     res.json(view);
   } catch (err) {
     console.error("get insights", err);
@@ -93,16 +180,25 @@ app.post("/api/meetings/:id/insights/view/minutes", authMiddleware, async (req, 
 app.post("/api/meetings/:id/insights/view/analyze-minute", authMiddleware, async (req, res) => {
   try {
     const meetingId = req.params.id;
-    const body = req.body as { meetingContext: string; transcriptChunk: string; minuteNumber: number; title?: string };
+    const body = req.body as {
+      meetingContext: string;
+      transcriptChunk: string;
+      minuteNumber: number;
+      title?: string;
+      agentId?: string;
+    };
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
     if (!body.meetingContext || body.minuteNumber == null || !body.transcriptChunk) {
       return res.status(400).json({ error: "meetingContext, minuteNumber e transcriptChunk são obrigatórios" });
     }
+    const agentProfile = await getAgentPromptProfile(userId, body.agentId);
     const insight = await analyzeMeetingMinute({
       meetingContext: body.meetingContext,
       minuteNumber: Number(body.minuteNumber),
       transcriptChunk: body.transcriptChunk,
-    });
-    await saveMinuteInsight(meetingId, insight, body.title, req.userId);
+    }, undefined, { agentProfile });
+    await saveMinuteInsight(meetingId, insight, body.title, req.userId, body.transcriptChunk);
     const view = await getMeetingInsightsView(meetingId, body.title);
     res.json(view);
   } catch (err) {
@@ -136,17 +232,20 @@ app.patch("/api/meetings/:id/insights/view/tasks", authMiddleware, async (req, r
 app.post("/api/meetings/:id/audio-chunk", authMiddleware, audioUpload.single("audio"), handleAudioChunk);
 
 /** Modo 2: Um turno do simulador de vendas */
-app.post("/api/training/simulator/turn", async (req, res) => {
+app.post("/api/training/simulator/turn", authMiddleware, async (req, res) => {
   try {
     const body = req.body as SalesSimulatorInput;
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
     if (!body.scenario || !body.lastSalesMessage) {
       return res.status(400).json({ error: "scenario e lastSalesMessage são obrigatórios" });
     }
+    const agentProfile = await getAgentPromptProfile(userId, (req.body as { agentId?: string }).agentId);
     const result = await runSalesSimulatorTurn({
       scenario: body.scenario,
       conversationHistory: body.conversationHistory ?? [],
       lastSalesMessage: body.lastSalesMessage,
-    });
+    }, undefined, { agentProfile });
     res.json(result);
   } catch (err) {
     console.error("simulator/turn", err);
@@ -155,16 +254,19 @@ app.post("/api/training/simulator/turn", async (req, res) => {
 });
 
 /** Modo 3: Avaliar resposta a uma objeção */
-app.post("/api/training/objections/evaluate", async (req, res) => {
+app.post("/api/training/objections/evaluate", authMiddleware, async (req, res) => {
   try {
     const body = req.body as ObjectionEvaluationInput;
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
     if (!body.objection || !body.salesRepResponse) {
       return res.status(400).json({ error: "objection e salesRepResponse são obrigatórios" });
     }
+    const agentProfile = await getAgentPromptProfile(userId, (req.body as { agentId?: string }).agentId);
     const result = await evaluateObjectionAnswer({
       objection: body.objection,
       salesRepResponse: body.salesRepResponse,
-    });
+    }, undefined, { agentProfile });
     res.json(result);
   } catch (err) {
     console.error("objections/evaluate", err);

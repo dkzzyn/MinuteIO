@@ -47,9 +47,13 @@ async function ensureMeeting(meetingId: string, options?: SaveOptions) {
   });
 }
 
-async function loadMinuteInsights(meetingId: string): Promise<MinuteInsight[]> {
+async function loadMinuteInsights(meetingId: string, since?: Date): Promise<MinuteInsight[]> {
   const rows = await prisma.meetingInsight.findMany({
-    where: { meetingId, type: "minute_insight" },
+    where: {
+      meetingId,
+      type: "minute_insight",
+      ...(since ? { createdAt: { gte: since } } : {}),
+    },
     orderBy: { createdAt: "asc" },
   });
 
@@ -75,7 +79,8 @@ export async function saveMinuteInsight(
   meetingId: string,
   insight: MinuteInsight,
   title?: string,
-  userId?: string
+  userId?: string,
+  transcriptChunk?: string
 ): Promise<void> {
   await ensureMeeting(meetingId, { title, userId });
 
@@ -90,13 +95,14 @@ export async function saveMinuteInsight(
       processedByAi: true,
       startTime: Math.max(0, (insight.minute - 1) * 60),
       endTime: insight.minute * 60,
+      transcript: transcriptChunk ?? insight.raw_text ?? "",
     },
     create: {
       meetingId,
       index: insight.minute,
       startTime: Math.max(0, (insight.minute - 1) * 60),
       endTime: insight.minute * 60,
-      transcript: "",
+      transcript: transcriptChunk ?? insight.raw_text ?? "",
       processedByAi: true,
     },
   });
@@ -130,10 +136,48 @@ export async function saveMinuteInsight(
   });
 }
 
+export type MeetingChunkAnalysis = {
+  meetingId: string;
+  chunkIndex: number;
+  transcript: string;
+  analysis: MinuteInsight;
+  createdAt: string;
+};
+
+export async function listMeetingChunkAnalyses(meetingId: string): Promise<MeetingChunkAnalysis[]> {
+  const rows = await prisma.meetingInsight.findMany({
+    where: { meetingId, type: "minute_insight" },
+    include: { clip: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return rows
+    .map((row) => {
+      try {
+        const analysis = JSON.parse(row.content) as MinuteInsight;
+        return {
+          meetingId,
+          chunkIndex: row.clip?.index ?? analysis.minute ?? 0,
+          transcript: row.clip?.transcript ?? analysis.raw_text ?? "",
+          analysis,
+          createdAt: row.createdAt.toISOString(),
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter((x): x is MeetingChunkAnalysis => !!x)
+    .sort((a, b) => a.chunkIndex - b.chunkIndex);
+}
+
 /**
  * Retorna a visão agregada para a aba "Insights da Reunião".
  */
-export async function getMeetingInsightsView(meetingId: string, title?: string): Promise<MeetingInsightsView | null> {
+export async function getMeetingInsightsView(
+  meetingId: string,
+  title?: string,
+  since?: Date
+): Promise<MeetingInsightsView | null> {
   const meeting = await prisma.meeting.findUnique({
     where: { id: meetingId },
   });
@@ -149,7 +193,7 @@ export async function getMeetingInsightsView(meetingId: string, title?: string):
     };
   }
 
-  const minuteInsights = await loadMinuteInsights(meetingId);
+  const minuteInsights = await loadMinuteInsights(meetingId, since);
   if (minuteInsights.length === 0) {
     return {
       title: meeting.title,

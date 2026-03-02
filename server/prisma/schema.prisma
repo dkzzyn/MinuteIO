@@ -17,6 +17,7 @@ model User {
   avatarUrl    String?
   posts        Post[]
   meetings     Meeting[]
+  agents       Agent[]
   promptVersionsCreated PromptVersion[] @relation("PromptVersionCreatedBy")
   meetingAnalysesCreated MeetingAnalysis[] @relation("MeetingAnalysisCreatedBy")
   teamsOwned   Team[]
@@ -24,6 +25,37 @@ model User {
   teamInvitationsSent     TeamInvitation[] @relation("TeamInvitationInvitedBy")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Agent {
+  id        String      @id @default(cuid())
+  userId    String      @map("user_id")
+  name      String
+  slug      String
+  isActive  Boolean     @default(true) @map("is_active")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  config    AgentConfig?
+
+  @@unique([userId, slug])
+  @@index([userId])
+  @@map("agents")
+}
+
+model AgentConfig {
+  id                  String   @id @default(cuid())
+  agentId             String   @unique @map("agent_id")
+  sentimentTone       String   @default("neutro") @map("sentiment_tone")
+  salesAggressiveness String   @default("moderado") @map("sales_aggressiveness")
+  objectionTips       Json?    @map("objection_tips")
+  extraConfig         Json?    @map("extra_config")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  agent               Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@map("agent_configs")
 }
 
 model Prompt {

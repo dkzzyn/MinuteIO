@@ -21,6 +21,18 @@ export interface MinuteInsight {
   tasks: { text: string; done: boolean }[];
   key_points: string[];
   sentiment: "positive" | "neutral" | "negative";
+  score: number;
+  emotions: string[];
+  topics: string[];
+  raw_text?: string;
+}
+
+export interface MeetingChunkAnalysis {
+  meetingId: string;
+  chunkIndex: number;
+  transcript: string;
+  analysis: MinuteInsight;
+  createdAt: string;
 }
 
 export interface MeetingInsightsView {
@@ -66,18 +78,50 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function del(path: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+}
+
 /** GET Insights da Reunião (visão agregada + timeline). */
-export function getMeetingInsights(meetingId: string, title?: string): Promise<MeetingInsightsView> {
-  const q = title ? `?title=${encodeURIComponent(title)}` : "";
-  return get(`/api/meetings/${meetingId}/insights/view${q}`);
+export function getMeetingInsights(meetingId: string, title?: string, since?: string): Promise<MeetingInsightsView> {
+  const params = new URLSearchParams();
+  if (title) params.set("title", title);
+  if (since) params.set("since", since);
+  const query = params.toString();
+  return get(`/api/meetings/${meetingId}/insights/view${query ? `?${query}` : ""}`);
 }
 
 /** POST Analisa 1 minuto com Ollama e persiste; retorna a visão atualizada. */
 export function analyzeAndSaveMinute(
   meetingId: string,
-  params: { meetingContext: string; minuteNumber: number; transcriptChunk: string; title?: string }
+  params: { meetingContext: string; minuteNumber: number; transcriptChunk: string; title?: string; agentId?: string }
 ): Promise<MeetingInsightsView> {
   return post(`/api/meetings/${meetingId}/insights/view/analyze-minute`, params);
+}
+
+export function analyzeMeetingChunk(
+  meetingId: string,
+  params: {
+    chunkIndex: number;
+    transcript: string;
+    meetingContext?: string;
+    title?: string;
+    agentId?: string;
+  }
+): Promise<MinuteInsight> {
+  return post(`/api/meetings/${meetingId}/chunks`, params);
+}
+
+export function listMeetingChunks(meetingId: string): Promise<MeetingChunkAnalysis[]> {
+  return get(`/api/meetings/${meetingId}/chunks`);
+}
+
+export function clearMeetingChunks(meetingId: string): Promise<void> {
+  return del(`/api/meetings/${meetingId}/chunks`);
 }
 
 /** POST Adiciona um MinuteInsight já analisado. */

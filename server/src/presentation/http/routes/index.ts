@@ -1,4 +1,8 @@
 import { Router } from "express";
+import { Prisma } from "@prisma/client";
+import { analyzeMeetingMinute } from "../../../../ollama/ollamaService";
+import type { AgentPromptProfile } from "../../../../ollama/types";
+import { listMeetingChunkAnalyses, saveMinuteInsight } from "../../../../meetingInsightsService";
 import { RegisterUserUseCase } from "../../../application/use-cases/auth/RegisterUser";
 import { LoginUserUseCase } from "../../../application/use-cases/auth/LoginUser";
 import { ListUserPostsUseCase } from "../../../application/use-cases/posts/ListUserPosts";
@@ -39,6 +43,138 @@ export function buildApiRouter(): Router {
   function canManagePrompts(role: string) {
     const normalized = role.toLowerCase();
     return normalized === "admin" || normalized === "supervisor";
+  }
+
+  const SENTIMENT_TONES = new Set(["positivo", "neutro", "negativo"]);
+  const SALES_AGGRESSIVENESS = new Set(["baixo", "moderado", "alto"]);
+  const PROMPT_CONFIG_LANGUAGES = new Set(["pt-BR", "en-US", "es-ES"]);
+  const PROMPT_CONFIG_MEETING_TYPES = new Set(["interna", "cliente", "suporte", "venda", "outro"]);
+  const PROMPT_CONFIG_DETAIL_LEVELS = new Set(["resumo_curto", "topicos", "completa"]);
+  const PROMPT_CONFIG_SENTIMENT_MODES = new Set(["simple", "score"]);
+
+  type PromptConfig = {
+    transcription: {
+      enabled: boolean;
+      language: string;
+      meetingType: "interna" | "cliente" | "suporte" | "venda" | "outro";
+      detailLevel: "resumo_curto" | "topicos" | "completa";
+    };
+    sentiment: {
+      enabled: boolean;
+      mode: "simple" | "score";
+      showOverall: boolean;
+      showPerParticipant: boolean;
+      showIntensity: boolean;
+    };
+  };
+
+  const DEFAULT_PROMPT_CONFIG: PromptConfig = {
+    transcription: {
+      enabled: true,
+      language: "pt-BR",
+      meetingType: "cliente",
+      detailLevel: "topicos",
+    },
+    sentiment: {
+      enabled: true,
+      mode: "simple",
+      showOverall: true,
+      showPerParticipant: false,
+      showIntensity: true,
+    },
+  };
+
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
+  function normalizePromptConfig(input: unknown): PromptConfig {
+    if (!isRecord(input)) return DEFAULT_PROMPT_CONFIG;
+
+    const transcription = isRecord(input.transcription) ? input.transcription : {};
+    const sentiment = isRecord(input.sentiment) ? input.sentiment : {};
+    const language = typeof transcription.language === "string" ? transcription.language : DEFAULT_PROMPT_CONFIG.transcription.language;
+    const meetingType =
+      typeof transcription.meetingType === "string" && PROMPT_CONFIG_MEETING_TYPES.has(transcription.meetingType)
+        ? (transcription.meetingType as PromptConfig["transcription"]["meetingType"])
+        : DEFAULT_PROMPT_CONFIG.transcription.meetingType;
+    const detailLevel =
+      typeof transcription.detailLevel === "string" && PROMPT_CONFIG_DETAIL_LEVELS.has(transcription.detailLevel)
+        ? (transcription.detailLevel as PromptConfig["transcription"]["detailLevel"])
+        : DEFAULT_PROMPT_CONFIG.transcription.detailLevel;
+    const sentimentMode =
+      typeof sentiment.mode === "string" && PROMPT_CONFIG_SENTIMENT_MODES.has(sentiment.mode)
+        ? (sentiment.mode as PromptConfig["sentiment"]["mode"])
+        : DEFAULT_PROMPT_CONFIG.sentiment.mode;
+
+    return {
+      transcription: {
+        enabled:
+          typeof transcription.enabled === "boolean"
+            ? transcription.enabled
+            : DEFAULT_PROMPT_CONFIG.transcription.enabled,
+        language: PROMPT_CONFIG_LANGUAGES.has(language) ? language : DEFAULT_PROMPT_CONFIG.transcription.language,
+        meetingType,
+        detailLevel,
+      },
+      sentiment: {
+        enabled:
+          typeof sentiment.enabled === "boolean" ? sentiment.enabled : DEFAULT_PROMPT_CONFIG.sentiment.enabled,
+        mode: sentimentMode,
+        showOverall:
+          typeof sentiment.showOverall === "boolean"
+            ? sentiment.showOverall
+            : DEFAULT_PROMPT_CONFIG.sentiment.showOverall,
+        showPerParticipant:
+          typeof sentiment.showPerParticipant === "boolean"
+            ? sentiment.showPerParticipant
+            : DEFAULT_PROMPT_CONFIG.sentiment.showPerParticipant,
+        showIntensity:
+          typeof sentiment.showIntensity === "boolean"
+            ? sentiment.showIntensity
+            : DEFAULT_PROMPT_CONFIG.sentiment.showIntensity,
+      },
+    };
+  }
+
+  function slugifyAgentName(value: string): string {
+    return value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "")
+      .slice(0, 60);
+  }
+
+  async function getAgentPromptProfile(userId: string, agentId?: string): Promise<AgentPromptProfile | undefined> {
+    if (!agentId?.trim()) return undefined;
+    const agent = await prisma.agent.findFirst({
+      where: { id: agentId.trim(), userId },
+      include: { config: true },
+    });
+    if (!agent) return undefined;
+    return {
+      agentName: agent.name,
+      sentimentTone: agent.config?.sentimentTone ?? "neutro",
+      salesAggressiveness: agent.config?.salesAggressiveness ?? "moderado",
+      objectionTips: agent.config?.objectionTips ?? {},
+      promptConfig: (agent.config?.extraConfig as AgentPromptProfile["promptConfig"]) ?? {
+        transcription: {
+          enabled: true,
+          language: "pt-BR",
+          meetingType: "cliente",
+          detailLevel: "topicos",
+        },
+        sentiment: {
+          enabled: true,
+          mode: "simple",
+          showOverall: true,
+          showPerParticipant: false,
+          showIntensity: true,
+        },
+      },
+    };
   }
 
   router.post("/auth/register", async (req, res) => {
@@ -405,6 +541,192 @@ export function buildApiRouter(): Router {
     }
   });
 
+  router.get("/agents", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+
+      const agents = await prisma.agent.findMany({
+        where: { userId },
+        include: {
+          config: true,
+        },
+        orderBy: [{ isActive: "desc" }, { name: "asc" }],
+      });
+      return res.json(agents);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao listar agentes.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
+  router.post("/agents", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+
+      const body = req.body as { name?: string; slug?: string; isActive?: boolean };
+      const name = body.name?.trim();
+      if (!name) return res.status(400).json({ error: "name é obrigatório." });
+
+      const generatedSlug = slugifyAgentName(name);
+      const slug = slugifyAgentName(body.slug?.trim() || generatedSlug);
+      if (!slug) {
+        return res.status(400).json({ error: "slug inválido. Use letras, números e hífen." });
+      }
+
+      const agent = await prisma.agent.create({
+        data: {
+          userId,
+          name,
+          slug,
+          isActive: body.isActive ?? true,
+        },
+      });
+
+      const config = await prisma.agentConfig.create({
+        data: {
+          agentId: agent.id,
+          extraConfig: DEFAULT_PROMPT_CONFIG as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      return res.status(201).json({
+        ...agent,
+        config: { ...config, extraConfig: normalizePromptConfig(config.extraConfig) },
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao criar agente.";
+      const status = msg.includes("Unique constraint") ? 409 : 500;
+      return res.status(status).json({ error: msg });
+    }
+  });
+
+  router.patch("/agents/:id", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+
+      const agentId = req.params.id;
+      const existing = await prisma.agent.findFirst({ where: { id: agentId, userId } });
+      if (!existing) return res.status(404).json({ error: "Agente não encontrado." });
+
+      const body = req.body as { name?: string; slug?: string; isActive?: boolean };
+      const data: { name?: string; slug?: string; isActive?: boolean } = {};
+
+      if (typeof body.name === "string") {
+        const name = body.name.trim();
+        if (!name) return res.status(400).json({ error: "name não pode ser vazio." });
+        data.name = name;
+      }
+      if (typeof body.slug === "string") {
+        const slug = slugifyAgentName(body.slug);
+        if (!slug) return res.status(400).json({ error: "slug inválido." });
+        data.slug = slug;
+      }
+      if (typeof body.isActive === "boolean") {
+        data.isActive = body.isActive;
+      }
+
+      const updated = await prisma.agent.update({
+        where: { id: agentId },
+        data,
+      });
+      return res.json(updated);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao atualizar agente.";
+      const status = msg.includes("Unique constraint") ? 409 : 500;
+      return res.status(status).json({ error: msg });
+    }
+  });
+
+  router.get("/agents/:id/config", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+
+      const agent = await prisma.agent.findFirst({
+        where: { id: req.params.id, userId },
+      });
+      if (!agent) return res.status(404).json({ error: "Agente não encontrado." });
+
+      const config = await prisma.agentConfig.upsert({
+        where: { agentId: agent.id },
+        update: {},
+        create: {
+          agentId: agent.id,
+          extraConfig: DEFAULT_PROMPT_CONFIG as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      return res.json({ ...config, extraConfig: normalizePromptConfig(config.extraConfig) });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao buscar configurações do agente.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
+  router.put("/agents/:id/config", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+
+      const agent = await prisma.agent.findFirst({
+        where: { id: req.params.id, userId },
+      });
+      if (!agent) return res.status(404).json({ error: "Agente não encontrado." });
+
+      const body = req.body as {
+        sentimentTone?: string;
+        salesAggressiveness?: string;
+        objectionTips?: unknown;
+        extraConfig?: unknown;
+        isActive?: boolean;
+      };
+
+      const sentimentTone = body.sentimentTone?.trim().toLowerCase() || "neutro";
+      const salesAggressiveness = body.salesAggressiveness?.trim().toLowerCase() || "moderado";
+      if (!SENTIMENT_TONES.has(sentimentTone)) {
+        return res.status(400).json({ error: "sentimentTone inválido. Use: positivo, neutro ou negativo." });
+      }
+      if (!SALES_AGGRESSIVENESS.has(salesAggressiveness)) {
+        return res.status(400).json({ error: "salesAggressiveness inválido. Use: baixo, moderado ou alto." });
+      }
+
+      const objectionTips =
+        body.objectionTips === undefined ? undefined : (body.objectionTips as Prisma.InputJsonValue);
+      const existingConfig = await prisma.agentConfig.findUnique({ where: { agentId: agent.id } });
+      const normalizedPromptConfig = normalizePromptConfig(
+        body.extraConfig === undefined ? existingConfig?.extraConfig : body.extraConfig
+      );
+      const extraConfig = normalizedPromptConfig as unknown as Prisma.InputJsonValue;
+
+      const config = await prisma.agentConfig.upsert({
+        where: { agentId: agent.id },
+        update: {
+          sentimentTone,
+          salesAggressiveness,
+          objectionTips,
+          extraConfig,
+          isActive: body.isActive ?? true,
+        },
+        create: {
+          agentId: agent.id,
+          sentimentTone,
+          salesAggressiveness,
+          objectionTips: objectionTips ?? Prisma.JsonNull,
+          extraConfig,
+          isActive: body.isActive ?? true,
+        },
+      });
+
+      return res.json({ ...config, extraConfig: normalizePromptConfig(config.extraConfig) });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao atualizar configuração do agente.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
   router.get("/meetings/:id/analyses", authMiddleware, async (req, res) => {
     try {
       const userId = req.userId;
@@ -732,6 +1054,105 @@ export function buildApiRouter(): Router {
       return res.json(clips);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro ao listar clipes.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
+  router.post("/meetings/:id/chunks", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+      const meetingId = req.params.id;
+
+      let meeting = await prisma.meeting.findUnique({ where: { id: meetingId } });
+      if (!meeting) {
+        meeting = await prisma.meeting.create({
+          data: {
+            id: meetingId,
+            userId,
+            postId: null,
+            type: "online",
+            title: "Reunião ao vivo",
+            description: null,
+            durationMinutes: 30,
+            language: "pt-BR",
+            pipelineStage: "discovery",
+            result: "Em andamento",
+            participants: ["Cliente", "Vendedor"],
+            winProbability: 0.5,
+            objectionTypes: [],
+            summary: "",
+            datetimeStart: new Date(),
+            datetimeEnd: null,
+            status: "running",
+            recordingUrl: null,
+          },
+        });
+      }
+
+      const body = req.body as {
+        chunkIndex?: number;
+        transcript?: string;
+        meetingContext?: string;
+        title?: string;
+        agentId?: string;
+      };
+      const chunkIndex = Number(body.chunkIndex);
+      const transcript = body.transcript?.trim() ?? "";
+      if (!Number.isFinite(chunkIndex) || chunkIndex <= 0 || !transcript) {
+        return res.status(400).json({ error: "chunkIndex (>0) e transcript são obrigatórios." });
+      }
+
+      const agentProfile = await getAgentPromptProfile(userId, body.agentId);
+      const analysis = await analyzeMeetingMinute(
+        {
+          meetingContext: body.meetingContext?.trim() || meeting.title,
+          minuteNumber: chunkIndex,
+          transcriptChunk: transcript,
+        },
+        undefined,
+        { agentProfile }
+      );
+
+      await saveMinuteInsight(meetingId, analysis, body.title || meeting.title, userId, transcript);
+      return res.status(201).json(analysis);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao analisar chunk da reunião.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
+  router.get("/meetings/:id/chunks", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+      const meetingId = req.params.id;
+      const meeting = await prisma.meeting.findUnique({ where: { id: meetingId } });
+      if (!meeting) return res.status(404).json({ error: "Reunião não encontrada." });
+
+      const chunks = await listMeetingChunkAnalyses(meetingId);
+      return res.json(chunks);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao listar chunks da reunião.";
+      return res.status(500).json({ error: msg });
+    }
+  });
+
+  router.delete("/meetings/:id/chunks", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
+      const meetingId = req.params.id;
+      const meeting = await prisma.meeting.findUnique({ where: { id: meetingId } });
+      if (!meeting) return res.status(404).json({ error: "Reunião não encontrada." });
+
+      await prisma.meetingInsight.deleteMany({
+        where: { meetingId, type: "minute_insight" },
+      });
+
+      return res.status(204).send();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao limpar chunks da reunião.";
       return res.status(500).json({ error: msg });
     }
   });

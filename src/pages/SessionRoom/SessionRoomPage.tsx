@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useSidebar } from "../../context/SidebarContext";
-import { getMeetingInsights, analyzeAndSaveMinute, setTaskDone, type MeetingInsightsView, type MinuteInsight } from "../../services/meetingInsightsApi";
+import { clearMeetingChunks, getMeetingInsights, setTaskDone, type MeetingInsightsView, type MinuteInsight } from "../../services/meetingInsightsApi";
 import { useAudioCapture, type AudioChunkResult } from "../../hooks/useAudioCapture";
 import "./SessionRoomPage.css";
 
@@ -17,7 +17,8 @@ const SENTIMENT_LABEL: Record<string, string> = {
   negative: "negativo",
 };
 
-const INSIGHTS_ERROR_MESSAGE = "Não foi possível carregar os insights. Entre em contato com o suporte para obter assistência.";
+const INSIGHTS_ERROR_MESSAGE = "Não foi possível carregar os insights agora.";
+const INSIGHTS_EMPTY_MESSAGE = "Ainda não há insights desta reunião.";
 
 export default function SessionRoomPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,8 +39,8 @@ export default function SessionRoomPage() {
   const [insightsView, setInsightsView] = useState<MeetingInsightsView | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(true);
   const [insightsError, setInsightsError] = useState<string | null>(null);
-  const [insightsTestLoading, setInsightsTestLoading] = useState(false);
   const [selectedMinute, setSelectedMinute] = useState<MinuteInsight | null>(null);
+  const sessionStartedAtRef = useRef<string>(new Date().toISOString());
 
   const handleAudioChunkProcessed = useCallback((result: AudioChunkResult) => {
     if (result.insightsView) {
@@ -58,32 +59,52 @@ export default function SessionRoomPage() {
     onChunkProcessed: handleAudioChunkProcessed,
     onError: (err) => console.error("Erro na captura de áudio:", err),
   });
+  const { startCapture, stopCapture } = audioCapture;
+  const hasLiveCapture = isSharing || audioCapture.isCapturing;
 
   const fetchInsights = useCallback(async () => {
-    if (!id) return;
+    if (!id || !hasLiveCapture) return;
     try {
       setInsightsError(null);
-      const view = await getMeetingInsights(id, meetingTitle);
-      const hasData = view.realtimeSummary || view.minuteInsights.length > 0;
+      const view = await getMeetingInsights(id, meetingTitle, sessionStartedAtRef.current);
       setInsightsView(view);
-      if (!hasData) setInsightsError(INSIGHTS_ERROR_MESSAGE);
     } catch {
       setInsightsView(null);
       setInsightsError(INSIGHTS_ERROR_MESSAGE);
     } finally {
       setInsightsLoading(false);
     }
-  }, [id, meetingTitle]);
+  }, [id, meetingTitle, hasLiveCapture]);
 
   useEffect(() => {
-    fetchInsights();
-  }, [fetchInsights]);
+    let cancelled = false;
+    async function prepareSessionInsights() {
+      if (!id) return;
+      setInsightsLoading(true);
+      setInsightsError(null);
+      try {
+        await clearMeetingChunks(id);
+      } catch {
+        // se falhar limpeza, ainda tentamos carregar os insights atuais
+      }
+      if (cancelled) return;
+      if (hasLiveCapture) {
+        await fetchInsights();
+      } else {
+        setInsightsLoading(false);
+      }
+    }
+    void prepareSessionInsights();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, fetchInsights, hasLiveCapture]);
 
   useEffect(() => {
-    if (!id || !insightsVisible) return;
+    if (!id || !insightsVisible || !hasLiveCapture) return;
     const t = setInterval(fetchInsights, 30000);
     return () => clearInterval(t);
-  }, [id, insightsVisible, fetchInsights]);
+  }, [id, insightsVisible, fetchInsights, hasLiveCapture]);
 
   async function handleTaskToggle(taskText: string, done: boolean) {
     if (!id) return;
@@ -92,29 +113,6 @@ export default function SessionRoomPage() {
       setInsightsView(view);
     } catch {
       // keep local state on error
-    }
-  }
-
-  /** Gera um insight de teste chamando o Ollama (para validar backend + IA). */
-  async function handleGenerateTestInsights() {
-    if (!id) return;
-    setInsightsTestLoading(true);
-    setInsightsError(null);
-    try {
-      const view = await analyzeAndSaveMinute(id, {
-        meetingContext: "Reunião de alinhamento com o cliente sobre o projeto.",
-        minuteNumber: 1,
-        transcriptChunk: "Cliente confirmou o orçamento. Ficou definido prazo para próxima semana. Precisamos enviar a proposta revisada e agendar reunião de follow-up.",
-        title: meetingTitle,
-      });
-      setInsightsView(view);
-      setInsightsError(null);
-    } catch (e) {
-      console.error(e);
-      const msg = e instanceof Error ? e.message : "Falha ao gerar insights. Verifique se o backend e o Ollama estão rodando (porta 3001 e 11434).";
-      setInsightsError(msg);
-    } finally {
-      setInsightsTestLoading(false);
     }
   }
 
@@ -158,6 +156,9 @@ export default function SessionRoomPage() {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    if (audioCapture.isCapturing) {
+      stopCapture();
+    }
     setShareError(null);
   }
 
@@ -174,6 +175,9 @@ export default function SessionRoomPage() {
       });
       streamRef.current = stream;
       setScreenStream(stream);
+      if (!audioCapture.isCapturing) {
+        await startCapture();
+      }
     } catch (err) {
       if (err instanceof Error) {
         if (err.name === "NotAllowedError") {
@@ -198,6 +202,7 @@ export default function SessionRoomPage() {
   }, []);
 
   function handleEndSession() {
+    stopCapture();
     stopScreenShare();
     if (window.confirm("Encerrar reunião? O resumo será gerado automaticamente.")) {
       navigate("/meetings");
@@ -277,36 +282,31 @@ export default function SessionRoomPage() {
               </button>
             )}
 
-            {/* Controle de gravação de áudio */}
             {audioCapture.isCapturing ? (
               <button
                 type="button"
-                onClick={audioCapture.stopCapture}
+                onClick={stopCapture}
                 className="session-btn-audio session-btn-audio--active"
-                title="Parar gravação de áudio"
+                title="Parar captura de áudio"
               >
-                <svg className="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="6" y="4" width="4" height="16" />
-                  <rect x="14" y="4" width="4" height="16" />
-                </svg>
-                Min {audioCapture.currentMinute} • Gravando
+                Áudio ativo
               </button>
             ) : (
               <button
                 type="button"
-                onClick={audioCapture.startCapture}
+                onClick={() => void startCapture()}
                 className="session-btn-audio"
-                title="Iniciar gravação de áudio para insights"
+                title="Ativar captura de áudio"
               >
-                <svg className="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="23" />
-                  <line x1="8" y1="23" x2="16" y2="23" />
-                </svg>
-                Gravar áudio
+                Ativar áudio
               </button>
             )}
+
+            <span className="session-participants">
+              {audioCapture.isCapturing
+                ? `Captura automática ativa (min ${audioCapture.currentMinute || 1})`
+                : "Captura de áudio inativa"}
+            </span>
 
             <button type="button" onClick={handleEndSession} className="session-btn-end">
               Encerrar
@@ -358,7 +358,16 @@ export default function SessionRoomPage() {
             <p className="session-insights-subtitle">Análise por minuto (Ollama)</p>
           </div>
 
-          {!insightsVisible || insightsLoading ? (
+          {!hasLiveCapture ? (
+            <div className="session-insights-body">
+              <div className="session-insights-error">
+                <p>Aguardando captura ativa.</p>
+                <p className="session-insights-error-hint">
+                  Os insights só aparecem quando houver compartilhamento de tela ou captura de áudio.
+                </p>
+              </div>
+            </div>
+          ) : !insightsVisible || insightsLoading ? (
             <div className="session-insights-loading">
               <div className="session-insights-spinner" />
               <p>Preparando análise...</p>
@@ -366,16 +375,12 @@ export default function SessionRoomPage() {
           ) : insightsError || !insightsView || (!insightsView.realtimeSummary && insightsView.minuteInsights.length === 0) ? (
             <div className="session-insights-body">
               <div className="session-insights-error">
-                <p>{insightsError ?? INSIGHTS_ERROR_MESSAGE}</p>
-                <p className="session-insights-error-hint">Os insights aparecem quando a reunião é analisada minuto a minuto pelo Ollama.</p>
-                <button
-                  type="button"
-                  className="session-insights-test-btn"
-                  onClick={handleGenerateTestInsights}
-                  disabled={insightsTestLoading}
-                >
-                  {insightsTestLoading ? "Gerando com Ollama…" : "Gerar insights de teste"}
-                </button>
+                <p>{insightsError ?? INSIGHTS_EMPTY_MESSAGE}</p>
+                <p className="session-insights-error-hint">
+                  {insightsError
+                    ? "Verifique backend/Ollama e tente novamente."
+                    : "Os insights aparecem automaticamente com a gravação real da reunião (1 em 1 minuto)."}
+                </p>
               </div>
             </div>
           ) : (
@@ -427,6 +432,7 @@ export default function SessionRoomPage() {
                                 <th>Min</th>
                                 <th>Resumo</th>
                                 <th>Sent.</th>
+                                <th>Score</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -439,6 +445,7 @@ export default function SessionRoomPage() {
                                   <td>{mi.minute}</td>
                                   <td>{mi.summary.slice(0, 40)}{mi.summary.length > 40 ? "…" : ""}</td>
                                   <td>{SENTIMENT_LABEL[mi.sentiment] ?? mi.sentiment}</td>
+                                  <td>{mi.score}</td>
                                 </tr>
                               ))}
                             </tbody>

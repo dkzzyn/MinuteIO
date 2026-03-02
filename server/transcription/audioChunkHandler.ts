@@ -117,7 +117,7 @@ export async function handleAudioChunk(req: Request, res: Response) {
     });
     console.log(`[AudioChunk] Insight gerado: ${insight.summary.slice(0, 80)}...`);
     
-    await saveMinuteInsight(meetingId, insight, title, req.userId);
+    await saveMinuteInsight(meetingId, insight, title, req.userId, transcription.text);
     
     const view = await getMeetingInsightsView(meetingId, title);
     
