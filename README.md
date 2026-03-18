@@ -1,6 +1,6 @@
 # MinuteIO
 
-App de reuniões e insights com IA: relatórios, call intelligence, clientes (mini-CRM) e configurações.
+App de reuniões e insights com IA: relatórios, call intelligence, clientes (mini-CRM) e configurações, com foco no modelo de pensamento ollama.
 
 ## Desenvolvimento
 
