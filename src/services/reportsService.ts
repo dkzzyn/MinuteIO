@@ -1,4 +1,12 @@
 import { getMeetingDetails, listMeetings } from "./api";
+import {
+  fetchReportsKpis,
+  fetchMeetingsByDay,
+  fetchOutcomeDistribution,
+  fetchSentimentOverTime,
+  fetchTalkToListen,
+  fetchMeetingsHistory,
+} from "./reportsApi";
 
 export type MeetingOutcome = "Won" | "Lost" | "Em andamento" | "Sem decisão";
 
@@ -27,6 +35,8 @@ type MeetingHistoryItem = {
 };
 
 export async function getReportsKpis(): Promise<Kpis> {
+  const fromApi = await fetchReportsKpis();
+  if (fromApi) return fromApi;
   const meetings = await listMeetings();
   const totalMeetings = meetings.length;
   const avgDurationMinutes = totalMeetings
@@ -48,6 +58,18 @@ export async function getReportsKpis(): Promise<Kpis> {
 }
 
 export async function getMeetingsHistory(): Promise<MeetingHistoryItem[]> {
+  const apiRows = await fetchMeetingsHistory(100);
+  if (apiRows?.length) {
+    return apiRows.map((r) => ({
+      id: r.id,
+      clientName: r.clientName,
+      title: r.title,
+      date: r.date,
+      durationMinutes: r.durationMinutes,
+      outcome: (r.outcome as MeetingHistoryItem["outcome"]) ?? undefined,
+      meetingType: (r.meetingType as MeetingHistoryItem["meetingType"]) ?? "outro",
+    }));
+  }
   const meetings = await listMeetings();
   const details = await Promise.all(meetings.slice(0, 20).map((m) => getMeetingDetails(m.id)));
   const detailsMap = new Map(details.filter(Boolean).map((d) => [d!.id, d!]));
@@ -74,6 +96,8 @@ export async function getMeetingsHistory(): Promise<MeetingHistoryItem[]> {
 export type MeetingsByDayPoint = { label: string; count: number; date: string };
 
 export async function getMeetingsByDay(): Promise<MeetingsByDayPoint[]> {
+  const fromApi = await fetchMeetingsByDay();
+  if (fromApi) return fromApi;
   const meetings = await listMeetings();
   const byDay = new Map<string, number>();
   meetings.forEach((m) => {
@@ -94,6 +118,8 @@ export async function getMeetingsByDay(): Promise<MeetingsByDayPoint[]> {
 export type OutcomeSlice = { name: string; value: number; fill: string };
 
 export async function getOutcomeDistribution(): Promise<OutcomeSlice[]> {
+  const fromApi = await fetchOutcomeDistribution();
+  if (fromApi) return fromApi;
   const meetings = await listMeetings();
   const counts = {
     "Ganha": meetings.filter((m) => m.result === "Won").length,
@@ -113,6 +139,8 @@ export async function getOutcomeDistribution(): Promise<OutcomeSlice[]> {
 export type SentimentOverTimePoint = { label: string; value: number };
 
 export async function getSentimentOverTime(): Promise<SentimentOverTimePoint[]> {
+  const fromApi = await fetchSentimentOverTime();
+  if (fromApi?.length) return fromApi;
   const meetings = await listMeetings();
   const details = await Promise.all(meetings.slice(0, 12).map((m) => getMeetingDetails(m.id)));
   return details
@@ -127,6 +155,10 @@ export async function getSentimentOverTime(): Promise<SentimentOverTimePoint[]> 
 export type TalkToListenBar = { type: string; sellerPct: number; clientPct: number };
 
 export async function getTalkToListenByType(): Promise<TalkToListenBar[]> {
+  const fromApi = await fetchTalkToListen();
+  if (fromApi?.length) {
+    return fromApi.map(({ type, sellerPct, clientPct }) => ({ type, sellerPct, clientPct }));
+  }
   const meetings = await listMeetings();
   const details = await Promise.all(meetings.map((m) => getMeetingDetails(m.id)));
   const grouped = new Map<string, { seller: number; client: number; count: number }>();

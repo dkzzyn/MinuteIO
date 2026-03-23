@@ -7,6 +7,7 @@
     "dev": "vite",
     "dev:server": "cd server && npm run dev",
     "dev:all": "concurrently -n server,web -c blue,green \"npm run dev:server\" \"npm run dev\"",
+    "llama-swap": "llama-swap --config ./llama-swap-config.yaml --listen localhost:8080",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc -noEmit"

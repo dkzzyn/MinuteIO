@@ -12,6 +12,7 @@ const navItems = [
   { to: "/training", label: "Treinamentos", icon: "training" },
   { to: "/reports", label: "Relatórios", icon: "chart" },
   { to: "/payments", label: "Pagamentos e planos", icon: "credit" },
+  { to: "/apis", label: "Catálogo de APIs", icon: "api" },
   { to: "/settings", label: "Configurações", icon: "settings" },
 ] as const;
 
@@ -78,6 +79,12 @@ function NavIcon({ icon }: { icon: string }) {
         <svg className={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="8" r="4" />
           <path d="M4 21a8 8 0 0 1 16 0" />
+        </svg>
+      );
+    case "api":
+      return (
+        <svg className={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 17l6-6-6-6M12 19l6-6-6-6" />
         </svg>
       );
     default:

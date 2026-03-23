@@ -3,8 +3,7 @@
  * Usa MediaRecorder para gravar e envia para o backend processar.
  */
 import { useRef, useState, useCallback, useEffect } from "react";
-
-const BASE_URL = import.meta.env.VITE_OLLAMA_API_URL ?? "http://localhost:3001";
+import { apiUrl } from "../config/apiBase";
 const DEFAULT_CHUNK_INTERVAL_MS = 60_000; // 1 minuto
 const AUTH_STORAGE_KEY = "minuteio_auth_token";
 
@@ -74,7 +73,7 @@ export function useAudioCapture(options: AudioCaptureOptions): UseAudioCaptureRe
 
       try {
         const token = localStorage.getItem(AUTH_STORAGE_KEY);
-        const res = await fetch(`${BASE_URL}/api/meetings/${meetingId}/audio-chunk`, {
+        const res = await fetch(apiUrl(`/api/meetings/${meetingId}/audio-chunk`), {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           body: formData,

@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mostlygeek/llama-swap/refs/heads/main/config-schema.json
+#
+# llama-swap (:8080) -> Ollama OpenAI API (:11434/v1)
+# =====================================================
+# Sem Docker: Ollama e llama-swap no mesmo Mac/Linux → use 127.0.0.1 abaixo.
+#
+# Pré-requisito:
+#   ollama serve
+#   ollama pull llama3:70b && ollama pull mistral && ollama pull gemma2:27b
+#
+# O schema do llama-swap exige "cmd" por modelo; com Ollama já rodando usamos
+# um processo no-op (tail -f /dev/null no macOS) + proxy + useModelName.
+#
+# Se um dia rodar llama-swap DENTRO do Docker e Ollama no host, troque para:
+#   ollama_openai_base: "http://host.docker.internal:11434/v1"
+
+logLevel: info
+healthCheckTimeout: 120
+globalTTL: 0
+
+macros:
+  ollama_openai_base: "http://127.0.0.1:11434/v1"
+
+# Opcional: exigir Bearer (use o mesmo valor em OPENAI_API_KEY no app)
+# apiKeys:
+#   - "sk-local-llama-swap"
+
+# macOS: use "tail -f /dev/null" em vez de "sleep infinity" (BSD sleep não aceita infinity).
+models:
+  "llama3:70b":
+    cmd: tail -f /dev/null
+    proxy: ${ollama_openai_base}
+    useModelName: llama3:70b
+    checkEndpoint: none
+    aliases:
+      - gpt-4
+      - gpt-4-turbo
+
+  "mistral:8x7b":
+    cmd: tail -f /dev/null
+    proxy: ${ollama_openai_base}
+    useModelName: mistral
+    checkEndpoint: none
+    aliases:
+      - mistral
+      - gpt-3.5-turbo
+
+  "gemma:27b":
+    cmd: tail -f /dev/null
+    proxy: ${ollama_openai_base}
+    useModelName: gemma2:27b
+    checkEndpoint: none
+    aliases:
+      - gemma
+      - gemma-27b

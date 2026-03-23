@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   MOCK_TRAINING_SCORES,
@@ -6,6 +7,7 @@ import {
   MOCK_SIMULATION_HISTORY,
   MOCK_MODULES,
 } from "./mockData";
+import { fetchProductProgress } from "../../services/trainingApi";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -13,11 +15,33 @@ function formatDate(iso: string) {
 }
 
 export default function TrainingHubPage() {
+  const [completedLessons, setCompletedLessons] = useState(0);
+  const [totalLessons, setTotalLessons] = useState(5);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const p = await fetchProductProgress();
+        if (!cancelled) {
+          setCompletedLessons(p.completedLessonIds?.length ?? 0);
+          setTotalLessons(p.totalLessons ?? 5);
+        }
+      } catch {
+        if (!cancelled) {
+          setCompletedLessons(0);
+          setTotalLessons(5);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const overallScore = MOCK_TRAINING_SCORES.find((s) => s.moduleId === "overall");
   const simulatorScore = MOCK_TRAINING_SCORES.find((s) => s.moduleId === "simulator");
   const objectionsScore = MOCK_TRAINING_SCORES.find((s) => s.moduleId === "objections");
-  const completedLessons = 3; // TODO: vir da API – ex. GET /api/training/product/progress
-  const totalLessons = 5;
 
   return (
     <div className="training-hub-page">

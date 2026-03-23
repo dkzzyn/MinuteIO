@@ -1,10 +1,9 @@
 /**
  * Cliente para a API do backend MinuteIO que usa Ollama.
- * Configure VITE_OLLAMA_API_URL (ex.: http://localhost:3001) no .env.
- * Se o backend não estiver disponível, as páginas podem continuar com mock.
+ * Base URL: `src/config/apiBase.ts` (em dev, proxy Vite para :3001).
  */
 
-const BASE_URL = import.meta.env.VITE_OLLAMA_API_URL ?? "http://localhost:3001";
+import { apiUrl } from "../config/apiBase";
 const AUTH_STORAGE_KEY = "minuteio_auth_token";
 
 function tokenOrThrow(): string {
@@ -15,7 +14,7 @@ function tokenOrThrow(): string {
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const token = tokenOrThrow();
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -116,5 +115,5 @@ export function generateTrainingDashboardSummary(body: TrainingDashboardSummaryI
 
 /** Verifica se o backend está no ar. */
 export function healthCheck(): Promise<{ ok: boolean }> {
-  return fetch(`${BASE_URL}/api/health`).then((r) => r.json());
+  return fetch(apiUrl("/api/health")).then((r) => r.json());
 }

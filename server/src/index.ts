@@ -35,9 +35,39 @@ import { prisma } from "./infrastructure/database/prisma/client";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
+/** URL do Vite / frontend (para link na raiz do servidor). */
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
 
 app.use(cors());
 app.use(express.json());
+
+/** Evita "Cannot GET /" ao abrir http://localhost:3001/ no navegador. */
+app.get("/", (_req, res) => {
+  const wantsJson = _req.headers.accept?.includes("application/json");
+  if (wantsJson) {
+    res.json({
+      name: "MinuteIO API",
+      hint: "Este é o backend. Abra o frontend no navegador.",
+      frontendUrl: FRONTEND_URL,
+      try: ["/api/health", "/api/healthz"],
+    });
+    return;
+  }
+  res.type("html").send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>MinuteIO API</title></head>
+<body style="font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem">
+  <h1>MinuteIO — API</h1>
+  <p>Você está no <strong>servidor backend</strong> (porta ${PORT}). A interface web roda em outra porta.</p>
+  <p><a href="${FRONTEND_URL}">Abrir o app (frontend)</a></p>
+  <p>Links úteis:</p>
+  <ul>
+    <li><a href="/api/health"><code>GET /api/health</code></a></li>
+    <li><a href="/api/healthz"><code>GET /api/healthz</code></a></li>
+  </ul>
+</body>
+</html>`);
+});
 
 const audioUpload = multer(getAudioUploadConfig());
 
@@ -293,7 +323,14 @@ app.post("/api/training/dashboard/summary", async (req, res) => {
 app.use("/api", buildApiRouter());
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, ollama: "backend expects Ollama at " + (process.env.OLLAMA_URL ?? "http://localhost:11434") });
+  const openaiBase = process.env.OPENAI_BASE_URL?.trim();
+  res.json({
+    ok: true,
+    llmMode: openaiBase ? "openai_compat" : "ollama_native",
+    openaiBaseUrl: openaiBase || null,
+    ollamaUrl: process.env.OLLAMA_URL ?? "http://localhost:11434",
+    defaultModel: process.env.OLLAMA_MODEL ?? "llama3.2",
+  });
 });
 
 app.listen(PORT, () => {

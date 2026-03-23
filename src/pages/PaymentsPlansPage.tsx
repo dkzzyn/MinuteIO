@@ -1,11 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import {
-  getCompanyTokens,
-  getTokenUsageEntries,
-  getTypeLabel
-} from "../data/companyTokensStore";
-import type { TokenUsageEntry, TokenUsageType } from "../types/companyTokens";
+import { getTypeLabel } from "../data/companyTokensStore";
+import type { TokenUsageEntry, TokenUsageType, CompanyTokens } from "../types/companyTokens";
+import { fetchBillingUsage, fetchBillingUsageEntries } from "../services/billingApi";
+import { useAuth } from "../context/AuthContext";
 import BuyTokensModal from "../components/modals/BuyTokensModal";
 import ChangePlanModal, { type PlanId } from "../components/modals/ChangePlanModal";
 
@@ -19,7 +17,23 @@ function planNameToId(planName: string): PlanId {
   return "pro";
 }
 
+const emptyCompany: CompanyTokens = {
+  companyId: "",
+  companyName: "",
+  planName: "MinuteIO Pro",
+  tokensTotalPerCycle: 0,
+  tokensUsed: 0,
+  cycleStart: "",
+  cycleEnd: "",
+  renewalDate: "",
+  overagePricePer1000: 50,
+  usageByDay: [],
+};
+
 export default function PaymentsPlansPage() {
+  const { token } = useAuth();
+  const [company, setCompany] = useState<CompanyTokens>(emptyCompany);
+  const [entries, setEntries] = useState<TokenUsageEntry[]>([]);
   const [reportFilterPeriod, setReportFilterPeriod] = useState("");
   const [reportFilterUser, setReportFilterUser] = useState("");
   const [reportFilterClient, setReportFilterClient] = useState("");
@@ -27,9 +41,33 @@ export default function PaymentsPlansPage() {
   const [buyTokensOpen, setBuyTokensOpen] = useState(false);
   const [changePlanOpen, setChangePlanOpen] = useState(false);
 
-  const company = getCompanyTokens();
+  useEffect(() => {
+    if (!token) {
+      setCompany(emptyCompany);
+      setEntries([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const [c, e] = await Promise.all([fetchBillingUsage(), fetchBillingUsageEntries()]);
+        if (!cancelled) {
+          setCompany(c);
+          setEntries(Array.isArray(e) ? e : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setCompany(emptyCompany);
+          setEntries([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   const currentPlanId = planNameToId(company.planName);
-  const entries = getTokenUsageEntries();
 
   const usagePercent = company.tokensTotalPerCycle
     ? Math.round((company.tokensUsed / company.tokensTotalPerCycle) * 100)

@@ -30,7 +30,7 @@ export type NewClientForm = {
 type Props = {
   open: boolean;
   onClose: () => void;
-  onCreate: (form: NewClientForm) => void;
+  onCreate: (form: NewClientForm) => void | Promise<void>;
   presetKey?: keyof typeof presets | null;
 };
 
@@ -77,23 +77,27 @@ export default function NewClientModal({ open, onClose, onCreate, presetKey = nu
     if (e.key === "Escape") onClose();
   }
 
-  function submit() {
+  async function submit() {
     if (!name.trim()) {
       setError("Informe o nome do cliente.");
       return;
     }
     setError("");
-    onCreate({
-      name: name.trim(),
-      cnpjCpf: cnpjCpf.trim(),
-      contactName: contactName.trim(),
-      phone: phone.trim(),
-      email: email.trim(),
-      status,
-      tags: { segmento: segmento || undefined, tamanho: tamanho || undefined, origemLead: origemLead || undefined },
-      color
-    });
-    onClose();
+    try {
+      await onCreate({
+        name: name.trim(),
+        cnpjCpf: cnpjCpf.trim(),
+        contactName: contactName.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
+        status,
+        tags: { segmento: segmento || undefined, tamanho: tamanho || undefined, origemLead: origemLead || undefined },
+        color
+      });
+      onClose();
+    } catch {
+      setError("Não foi possível salvar. Tente novamente.");
+    }
   }
 
   if (!open) return null;

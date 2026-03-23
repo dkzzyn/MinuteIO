@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const inputClass =
   "w-full px-3 py-2 rounded bg-[var(--input-bg)] outline-none text-[var(--text-primary)]";
@@ -451,6 +452,25 @@ export default function Settings() {
             </div>
           </label>
         </div>
+      </SettingsBlock>
+
+      <SettingsBlock title="Catálogo de APIs">
+        <p className="text-sm text-[var(--text-secondary)]">
+          Lista interativa de todos os endpoints REST do Minute.IO (rotas base + rotas estendidas), atualizada a partir de{" "}
+          <code className="text-xs bg-[var(--bg-muted)] px-1 rounded">GET /api/catalog</code> no backend.
+        </p>
+        <Link
+          to="/apis"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent-green)] text-white text-sm font-medium hover:opacity-90 w-fit"
+        >
+          Abrir catálogo de APIs
+        </Link>
+        <p className="text-xs text-[var(--text-secondary)]">
+          Ficheiros no repositório:{" "}
+          <code className="text-[var(--accent-green)]">server/src/presentation/http/apiCatalog.ts</code> +{" "}
+          <code className="text-[var(--accent-green)]">extraApiCatalog.ts</code> · UI:{" "}
+          <code className="text-[var(--accent-green)]">src/pages/ApisPage.tsx</code>
+        </p>
       </SettingsBlock>
     </div>
   );

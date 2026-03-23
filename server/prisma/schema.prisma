@@ -15,6 +15,8 @@ model User {
   role         String   @default("user")
   isActive     Boolean  @default(true)
   avatarUrl    String?
+  /** Preferências de UI: tema, agente selecionado, sidebar, etc. */
+  preferences  Json?
   posts        Post[]
   meetings     Meeting[]
   agents       Agent[]
@@ -23,8 +25,77 @@ model User {
   teamsOwned   Team[]
   teamInvitationsReceived TeamInvitation[] @relation("TeamInvitationInvitedUser")
   teamInvitationsSent     TeamInvitation[] @relation("TeamInvitationInvitedBy")
+  crmClients              CrmClient[]
+  refreshTokens           RefreshToken[]
+  passwordResetTokens     PasswordResetToken[]
+  billing                 UserBilling?
+  trainingProgress        TrainingProgress[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model CrmClient {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("crm_clients")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("password_reset_tokens")
+}
+
+model UserBilling {
+  id                  String   @id @default(cuid())
+  userId              String   @unique @map("user_id")
+  planName            String   @default("MinuteIO Pro") @map("plan_name")
+  tokensTotalPerCycle Int      @default(20000) @map("tokens_total_per_cycle")
+  tokensUsed          Int      @default(0) @map("tokens_used")
+  cycleEnd            DateTime @map("cycle_end")
+  overagePricePer1000 Int      @default(50) @map("overage_price_per_1000")
+  usageEntries        Json     @default("[]") @map("usage_entries")
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_billing")
+}
+
+model TrainingProgress {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  lessonId    String   @map("lesson_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@map("training_progress")
 }
 
 model Agent {

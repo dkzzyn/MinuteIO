@@ -1,9 +1,11 @@
 /**
- * Serviço que chama o Ollama (localhost:11434).
- * Use apenas no backend; o front chama este backend via HTTP.
- * @see https://github.com/ollama/ollama/blob/main/docs/api.md
+ * LLM backend: Ollama nativo (/api/chat) OU proxy OpenAI-compat (ex.: llama-swap).
+ * Se OPENAI_BASE_URL estiver definido (ex.: http://localhost:8080/v1), usa Chat Completions.
+ * Caso contrário, usa OLLAMA_URL + /api/chat.
  */
 
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { LlamaSwapOpenAIClient } from "../src/infrastructure/llm/LlamaSwapOpenAIClient.js";
 import {
   PROMPT_MEETING_ANALYSIS,
   PROMPT_SALES_SIMULATOR,
@@ -25,6 +27,44 @@ import type {
 const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
 const DEFAULT_MODEL = process.env.OLLAMA_MODEL ?? "llama3.2";
 
+function useOpenAICompat(): boolean {
+  return Boolean(process.env.OPENAI_BASE_URL?.trim());
+}
+
+/** Collapse multiple system messages into one (OpenAI-style APIs expect a single system). */
+function toOpenAIChatMessages(messages: OllamaChatMessage[]): ChatCompletionMessageParam[] {
+  const systemParts: string[] = [];
+  const out: ChatCompletionMessageParam[] = [];
+  for (const m of messages) {
+    if (m.role === "system") {
+      systemParts.push(m.content);
+    } else {
+      out.push({ role: m.role, content: m.content });
+    }
+  }
+  if (systemParts.length > 0) {
+    out.unshift({ role: "system", content: systemParts.join("\n\n") });
+  }
+  return out;
+}
+
+let openAICompatClient: LlamaSwapOpenAIClient | null = null;
+
+function getOpenAICompatClient(): LlamaSwapOpenAIClient {
+  if (!openAICompatClient) {
+    let baseUrl = process.env.OPENAI_BASE_URL!.trim().replace(/\/$/, "");
+    if (!baseUrl.endsWith("/v1")) {
+      baseUrl = `${baseUrl}/v1`;
+    }
+    openAICompatClient = new LlamaSwapOpenAIClient({
+      baseUrl,
+      apiKey: process.env.OPENAI_API_KEY ?? "sk-local-no-key",
+      defaultModel: DEFAULT_MODEL,
+    });
+  }
+  return openAICompatClient;
+}
+
 export interface OllamaChatMessage {
   role: "system" | "user" | "assistant";
   content: string;
@@ -44,13 +84,30 @@ export async function callOllamaChat(
   messages: OllamaChatMessage[],
   options?: { stream?: boolean }
 ): Promise<OllamaChatResponse> {
+  if (options?.stream) {
+    throw new Error("stream=true is not supported in callOllamaChat; use Ollama direto ou implemente stream separado.");
+  }
+
+  if (useOpenAICompat()) {
+    const client = getOpenAICompatClient();
+    const content = await client.chat({
+      model,
+      messages: toOpenAIChatMessages(messages),
+      temperature: 0.2,
+    });
+    return {
+      message: { role: "assistant", content },
+      done: true,
+    };
+  }
+
   const res = await fetch(`${OLLAMA_URL}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model,
       messages,
-      stream: options?.stream ?? false,
+      stream: false,
     }),
   });
 

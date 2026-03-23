@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getClientById, addSupportMaterial } from "../data/clientsStore";
 import { getMeetingsHistory } from "../services/reportsService";
+import { useAuth } from "../context/AuthContext";
 import type { Client, ClientMaterial, MaterialCategory } from "../types/client";
 import { SUPPORT_MATERIAL_TYPE_LABELS, MATERIAL_FUNNEL_STAGE_LABELS } from "../types/supportMaterial";
 import AddSupportMaterialModal from "../components/modals/AddSupportMaterialModal";
@@ -64,6 +65,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
+  const { token } = useAuth();
   const [client, setClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("resumo");
   const [addMaterialModalOpen, setAddMaterialModalOpen] = useState(false);
@@ -71,8 +73,15 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    setClient(getClientById(id) ?? null);
-  }, [id]);
+    let cancelled = false;
+    (async () => {
+      const c = await getClientById(id);
+      if (!cancelled) setClient(c ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, token]);
 
   useEffect(() => {
     if (!client) return;
@@ -83,14 +92,17 @@ export default function ProjectDetailPage() {
   }, [client?.id, client?.name]);
 
   const refreshClient = () => {
-    if (id) setClient(getClientById(id) ?? null);
+    if (!id) return;
+    void getClientById(id).then((c) => setClient(c ?? null));
   };
 
   if (!id) return <div className="text-[var(--text-secondary)]">ID não informado.</div>;
   if (!client) return <div className="text-[var(--text-secondary)]">Cliente não encontrado.</div>;
 
   const supportMaterials = client.supportMaterials ?? [];
-  const hasMaterials = client.materials.length > 0 || supportMaterials.length > 0;
+  const materials = client.materials ?? [];
+  const timeline = client.timeline ?? [];
+  const hasMaterials = materials.length > 0 || supportMaterials.length > 0;
   const g = client.generalData;
 
   return (
@@ -167,11 +179,11 @@ export default function ProjectDetailPage() {
       {activeTab === "resumo" && (
         <div className="space-y-6">
           <Section title="Linha do tempo / Atividades">
-            {client.timeline.length === 0 ? (
+            {timeline.length === 0 ? (
               <p className="text-sm text-[var(--text-secondary)]">Nenhuma atividade registrada.</p>
             ) : (
               <ul className="space-y-3">
-                {client.timeline.map((a) => (
+                {timeline.map((a) => (
                   <li key={a.id} className="flex gap-3">
                     <span className="text-xs text-[var(--text-secondary)] shrink-0 w-20">
                       {new Date(a.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
@@ -270,7 +282,7 @@ export default function ProjectDetailPage() {
                   <a href={m.fileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--accent-green)] hover:underline">Abrir</a>
                 </li>
               ))}
-              {client.materials.map((m) => (
+              {materials.map((m) => (
                 <li
                   key={m.id}
                   className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--bg-muted)]/50"
@@ -297,8 +309,8 @@ export default function ProjectDetailPage() {
         clientId={client.id}
         clientName={client.name}
         clientMeetings={clientMeetings}
-        onSuccess={(payload) => {
-          addSupportMaterial(client.id, payload);
+        onSuccess={async (payload) => {
+          await addSupportMaterial(client.id, payload);
           refreshClient();
         }}
       />

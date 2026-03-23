@@ -4,6 +4,7 @@ import NewClientModal, { presets } from "../components/modals/NewClientModal";
 import type { NewClientForm } from "../components/modals/NewClientModal";
 import { getClients, addClient } from "../data/clientsStore";
 import type { Client } from "../types/client";
+import { useAuth } from "../context/AuthContext";
 
 const projectTypeKeys = ["vendas", "marketing", "desenvolvimento", "personalizado"] as const;
 const projectTypeLabels: Record<string, string> = {
@@ -74,24 +75,34 @@ function ClientCard({ client }: { client: Client }) {
 }
 
 export default function Project() {
+  const { token } = useAuth();
   const [search, setSearch] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalPreset, setModalPreset] = useState<keyof typeof presets | null>(null);
 
   useEffect(() => {
-    setClients(getClients());
-  }, []);
+    let cancelled = false;
+    (async () => {
+      const list = await getClients();
+      if (!cancelled) setClients(list);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
-  const refreshClients = () => setClients(getClients());
+  const refreshClients = () => {
+    void getClients().then(setClients);
+  };
 
   const openModal = (presetKey?: keyof typeof presets) => {
     setModalPreset(presetKey ?? null);
     setModalOpen(true);
   };
 
-  const handleCreateClient = (form: NewClientForm) => {
-    addClient({
+  const handleCreateClient = async (form: NewClientForm) => {
+    await addClient({
       name: form.name,
       cnpjCpf: form.cnpjCpf,
       contactName: form.contactName,

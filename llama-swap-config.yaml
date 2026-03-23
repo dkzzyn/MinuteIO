@@ -1,0 +1,28 @@
+# Minute.IO — llama-swap :8080 → Ollama 127.0.0.1:11434/v1
+# Confira modelos: ollama list  |  Ajuste useModelName se necessário
+
+logLevel: info
+healthCheckTimeout: 120
+globalTTL: 0
+
+macros:
+  ollama_openai_base: "http://127.0.0.1:11434/v1"
+
+models:
+  "gemma3:4b":
+    cmd: tail -f /dev/null
+    proxy: ${ollama_openai_base}
+    useModelName: gemma3:4b
+    checkEndpoint: none
+    aliases:
+      - gpt-4
+      - gpt-4-turbo
+      - default
+
+  "llama3.2":
+    cmd: tail -f /dev/null
+    proxy: ${ollama_openai_base}
+    useModelName: llama3.2
+    checkEndpoint: none
+    aliases:
+      - llama3

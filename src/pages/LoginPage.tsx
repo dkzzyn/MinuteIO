@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { REL_LOGIN_MESSAGE_KEY } from "../auth/jwtExpiry";
 import { ApiError } from "../infrastructure/http/api";
 import { loginUser } from "../services/authApi";
 import "./LoginPage.css";
@@ -34,6 +35,18 @@ export default function LoginPage() {
     if (isAuthenticated) navigate("/", { replace: true });
   }, [isAuthenticated, navigate]);
 
+  useEffect(() => {
+    try {
+      const msg = sessionStorage.getItem(REL_LOGIN_MESSAGE_KEY);
+      if (msg) {
+        setSubmitError(msg);
+        sessionStorage.removeItem(REL_LOGIN_MESSAGE_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitError(null);
@@ -51,7 +64,7 @@ export default function LoginPage() {
         email: email.trim(),
         password,
       });
-      login(result.token);
+      login(result.token, result.refreshToken ?? null);
       navigate("/", { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {

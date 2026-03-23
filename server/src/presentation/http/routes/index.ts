@@ -15,6 +15,10 @@ import { BcryptPasswordHasher } from "../../../infrastructure/security/BcryptPas
 import { JwtTokenService } from "../../../infrastructure/security/JwtTokenService";
 import { prisma } from "../../../infrastructure/database/prisma/client";
 import { authMiddleware } from "../middlewares/authMiddleware";
+import { API_CATALOG } from "../apiCatalog";
+import { enrichCatalogEndpoints } from "../apiDocsEnrichment";
+import { issueRefreshToken } from "../utils/authTokens";
+import { registerExtraRoutes } from "./extraRoutes";
 
 /**
  * Router base da camada de apresentação (Clean Architecture).
@@ -23,6 +27,19 @@ import { authMiddleware } from "../middlewares/authMiddleware";
  */
 export function buildApiRouter(): Router {
   const router = Router();
+
+  /** Evita "Cannot GET /api" ao abrir só a base do prefixo /api. */
+  router.get("/", (_req, res) => {
+    res.json({
+      service: "MinuteIO API",
+      catalog: "/api/catalog",
+      health: "/api/health",
+      healthz: "/api/healthz",
+      version: "/api/version",
+      hint: "Lista de endpoints em GET /api/catalog (sem autenticação).",
+    });
+  });
+
   const userRepository = new PrismaUserRepository();
   const postRepository = new PrismaPostRepository();
   const passwordHasher = new BcryptPasswordHasher();
@@ -228,7 +245,8 @@ export function buildApiRouter(): Router {
         password,
       });
 
-      return res.json(output);
+      const refreshToken = await issueRefreshToken(output.user.id);
+      return res.json({ ...output, refreshToken });
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro ao autenticar.";
       const status = msg.includes("Credenciais inválidas") ? 401 : 500;
@@ -250,6 +268,7 @@ export function buildApiRouter(): Router {
           role: true,
           avatarUrl: true,
           isActive: true,
+          preferences: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -268,9 +287,13 @@ export function buildApiRouter(): Router {
       const userId = req.userId;
       if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
 
-      const body = req.body as { name?: string; avatarUrl?: string | null };
+      const body = req.body as {
+        name?: string;
+        avatarUrl?: string | null;
+        preferences?: Record<string, unknown>;
+      };
 
-      const data: { name?: string; avatarUrl?: string | null } = {};
+      const data: Prisma.UserUpdateInput = {};
       if (typeof body.name === "string") {
         const trimmed = body.name.trim();
         if (!trimmed) return res.status(400).json({ error: "name não pode ser vazio." });
@@ -280,6 +303,19 @@ export function buildApiRouter(): Router {
       if (body.avatarUrl !== undefined) {
         const value = typeof body.avatarUrl === "string" ? body.avatarUrl.trim() : "";
         data.avatarUrl = value || null;
+      }
+
+      if (body.preferences !== undefined && typeof body.preferences === "object" && body.preferences !== null) {
+        const cur = await prisma.user.findUnique({ where: { id: userId }, select: { preferences: true } });
+        const prev =
+          cur?.preferences && typeof cur.preferences === "object" && !Array.isArray(cur.preferences)
+            ? (cur.preferences as Record<string, unknown>)
+            : {};
+        data.preferences = { ...prev, ...body.preferences } as Prisma.InputJsonValue;
+      }
+
+      if (Object.keys(data).length === 0) {
+        return res.status(400).json({ error: "Nada para atualizar (name, avatarUrl ou preferences)." });
       }
 
       const updated = await prisma.user.update({
@@ -292,6 +328,7 @@ export function buildApiRouter(): Router {
           role: true,
           avatarUrl: true,
           isActive: true,
+          preferences: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -1250,9 +1287,19 @@ export function buildApiRouter(): Router {
     }
   });
 
+  /** Catálogo público para a página /apis do frontend (sem JWT). Inclui `doc` com exemplos JSON. */
+  router.get("/catalog", (_req, res) => {
+    res.json({
+      generatedAt: new Date().toISOString(),
+      endpoints: enrichCatalogEndpoints(API_CATALOG),
+    });
+  });
+
   router.get("/healthz", (_req, res) => {
     res.json({ ok: true });
   });
+
+  registerExtraRoutes(router);
 
   return router;
 }

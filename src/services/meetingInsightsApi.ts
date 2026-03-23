@@ -1,9 +1,9 @@
 /**
  * API de Insights da Reunião (blocos 1 em 1 minuto vindos do Ollama).
- * Base URL: VITE_OLLAMA_API_URL (ex.: http://localhost:3001).
+ * Base: `getApiBaseUrl()` / proxy Vite em dev — ver `src/config/apiBase.ts`.
  */
 
-const BASE = import.meta.env.VITE_OLLAMA_API_URL ?? "http://localhost:3001";
+import { apiUrl } from "../config/apiBase";
 const AUTH_STORAGE_KEY = "minuteio_auth_token";
 
 function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
@@ -45,13 +45,13 @@ export interface MeetingInsightsView {
 }
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { headers: authHeaders() });
+  const res = await fetch(apiUrl(path), { headers: authHeaders() });
   if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
   return res.json() as Promise<T>;
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
@@ -69,7 +69,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function patch<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: "PATCH",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
@@ -79,7 +79,7 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function del(path: string): Promise<void> {
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -156,7 +156,7 @@ export async function sendAudioChunk(
   formData.append("minuteNumber", String(params.minuteNumber));
   if (params.title) formData.append("title", params.title);
 
-  const res = await fetch(`${BASE}/api/meetings/${meetingId}/audio-chunk`, {
+  const res = await fetch(apiUrl(`/api/meetings/${meetingId}/audio-chunk`), {
     method: "POST",
     headers: authHeaders(),
     body: formData,

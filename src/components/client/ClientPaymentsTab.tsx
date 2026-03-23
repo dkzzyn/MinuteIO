@@ -86,11 +86,15 @@ function RegisterPaymentModal({
 
   if (!open || !payment) return null;
 
-  function submit() {
+  async function submit() {
     if (!payment) return;
-    registerPayment(clientId, payment.id, { paidDate, paymentMethod, notes });
-    onSuccess();
-    onClose();
+    try {
+      await registerPayment(clientId, payment.id, { paidDate, paymentMethod, notes });
+      onSuccess();
+      onClose();
+    } catch {
+      /* erro de rede — manter modal aberto */
+    }
   }
 
   return (

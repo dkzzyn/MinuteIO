@@ -9,6 +9,7 @@ export default function Topbar() {
     if (seg === "meetings") return "Relatórios";
     if (seg === "reports") return "Relatórios e Insights";
     if (seg === "settings") return "Configurações";
+    if (seg === "apis") return "Catálogo de APIs";
     return seg;
   };
   const breadcrumb = path.length ? path.map(mapLabel).join(" / ") : "Dashboard";

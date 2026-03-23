@@ -20,8 +20,10 @@ import AgentsPage from "./pages/AgentsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SessionRoomPage from "./pages/SessionRoom/SessionRoomPage";
 import ProfilePage from "./pages/Profile/ProfilePage";
+import ApisPage from "./pages/ApisPage";
 import TrainingLayout from "./pages/Training/TrainingLayout";
 import TrainingHubPage from "./pages/Training/TrainingHubPage";
 import TrainingProductPage from "./pages/Training/TrainingProductPage";
@@ -38,6 +40,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/session/:id" element={<ProtectedRoute><SessionRoomPage /></ProtectedRoute>} />
           <Route
             path="/*"
@@ -57,6 +60,7 @@ function App() {
                     <Route path="/payments" element={<PaymentsPlansPage />} />
                     <Route path="/meetings/new" element={<CreateMeeting />} />
                     <Route path="/settings" element={<Settings />} />
+                    <Route path="/apis" element={<ApisPage />} />
                     <Route path="/capture-tab" element={<CaptureTabPage />} />
                     <Route path="/training" element={<TrainingLayout />}>
                       <Route index element={<TrainingHubPage />} />

@@ -70,7 +70,7 @@ type Props = {
   clientId: string;
   clientName: string;
   clientMeetings: ClientMeetingOption[];
-  onSuccess: (payload: AddSupportMaterialPayload) => void;
+  onSuccess: (payload: AddSupportMaterialPayload) => void | Promise<void>;
 };
 
 export default function AddSupportMaterialModal({
@@ -129,22 +129,25 @@ export default function AddSupportMaterialModal({
     // Simula upload; em produção seria FormData + API
     setTimeout(() => {
       const fileUrl = URL.createObjectURL(file);
-      onSuccess({
-        title: title.trim(),
-        fileUrl,
-        fileName: file.name,
-        fileType: file.type,
-        fileSizeBytes: file.size,
-        materialType,
-        funnelStage,
-        isConfidential,
-        tags: selectedTags,
-        notes: notes.trim() || undefined,
-        meetingId: meetingId || undefined
+      void Promise.resolve(
+        onSuccess({
+          title: title.trim(),
+          fileUrl,
+          fileName: file.name,
+          fileType: file.type,
+          fileSizeBytes: file.size,
+          materialType,
+          funnelStage,
+          isConfidential,
+          tags: selectedTags,
+          notes: notes.trim() || undefined,
+          meetingId: meetingId || undefined
+        })
+      ).then(() => {
+        setStatus("success");
+        resetForm();
+        onClose();
       });
-      setStatus("success");
-      resetForm();
-      onClose();
     }, 1500);
   }
 

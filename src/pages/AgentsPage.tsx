@@ -11,6 +11,7 @@ import {
   type PromptConfig,
   DEFAULT_PROMPT_CONFIG,
 } from "../services/agentsApi";
+import { getMyPreferences, mergeMyPreferences } from "../services/profileApi";
 
 const cardClass = "rounded-xl bg-[var(--bg-elevated)] border p-5";
 const borderStyle = { borderColor: "var(--border-subtle)" } as const;
@@ -70,8 +71,19 @@ export default function AgentsPage() {
         return;
       }
 
+      let fromPrefs: string | undefined;
+      try {
+        const prefs = await getMyPreferences();
+        const sid = prefs.selectedAgentId;
+        fromPrefs = typeof sid === "string" ? sid : undefined;
+      } catch {
+        /* ignore */
+      }
       const fromStorage = localStorage.getItem(SELECTED_AGENT_STORAGE_KEY);
-      const initial = data.find((a) => a.id === fromStorage)?.id ?? data[0].id;
+      const initial =
+        data.find((a) => a.id === fromPrefs)?.id ??
+        data.find((a) => a.id === fromStorage)?.id ??
+        data[0].id;
       setSelectedAgentId((prev) => prev ?? initial);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao carregar agentes.");
@@ -87,6 +99,9 @@ export default function AgentsPage() {
   useEffect(() => {
     if (!selectedAgentId) return;
     localStorage.setItem(SELECTED_AGENT_STORAGE_KEY, selectedAgentId);
+    void mergeMyPreferences({ selectedAgentId }).catch(() => {
+      /* offline */
+    });
   }, [selectedAgentId]);
 
   useEffect(() => {

@@ -15,6 +15,7 @@ export type UserProfile = {
   role: string;
   avatarUrl: string | null;
   isActive: boolean;
+  preferences?: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,10 +24,28 @@ export function getMyProfile(): Promise<UserProfile> {
   return apiRequest<UserProfile>("/api/me", { token: getToken() });
 }
 
-export function updateMyProfile(input: { name?: string; avatarUrl?: string | null }): Promise<UserProfile> {
+export function updateMyProfile(input: {
+  name?: string;
+  avatarUrl?: string | null;
+  preferences?: Record<string, unknown>;
+}): Promise<UserProfile> {
   return apiRequest<UserProfile>("/api/me", {
     method: "PUT",
     token: getToken(),
     body: input,
   });
+}
+
+export function getMyPreferences(): Promise<Record<string, unknown>> {
+  return apiRequest<{ preferences: Record<string, unknown> }>("/api/me/preferences", { token: getToken() }).then(
+    (r) => r.preferences ?? {}
+  );
+}
+
+export function mergeMyPreferences(partial: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return apiRequest<{ preferences: Record<string, unknown> }>("/api/me/preferences", {
+    method: "PUT",
+    token: getToken(),
+    body: { preferences: partial },
+  }).then((r) => r.preferences ?? {});
 }
